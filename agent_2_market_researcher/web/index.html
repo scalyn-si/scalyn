@@ -1,0 +1,1857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>scalyn.si — Autonomous Market Discovery & Growth For Any Startup</title>
+  
+  <!-- GOOGLE FONTS: Manrope, Inter Tight & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* ====================================================================
+       THEME CONFIGURATION: MOTION-BLUR GRADIENT + REEDED FLUTED GLASS
+       ==================================================================== */
+    :root {
+      /* Signature Palette */
+      --color-deep-navy:      #020b14;
+      --color-electric-blue:  #0096c7;
+      --color-cyan-glow:      #00b4d8;
+      --color-coral-orange:   #ff6b4a;
+      --color-hot-magenta:    #d83995;
+      --color-soft-peach:     #ffaa85;
+      --color-pure-white:     #fcffff;
+      --color-accent-green:   #39e58c;
+      --color-text-muted:     rgba(252, 255, 255, 0.78);
+      --color-text-dim:       rgba(252, 255, 255, 0.50);
+
+      /* Glassmorphism Design Tokens */
+      --glass-surface-card:   rgba(8, 30, 48, 0.58);
+      --glass-surface-hover:  rgba(255, 255, 255, 0.16);
+      --glass-border:         rgba(255, 255, 255, 0.18);
+      --glass-border-hover:   rgba(255, 255, 255, 0.42);
+      --glass-blur:           blur(28px) saturate(190%);
+      --glass-blur-sm:        blur(18px) saturate(160%);
+      --glass-shadow:         0 20px 50px rgba(0, 0, 0, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.24);
+      --glass-card-shadow:    0 28px 70px rgba(0, 0, 0, 0.48), inset 0 1px 1.5px rgba(255, 255, 255, 0.28);
+
+      /* Geometry Tokens */
+      --radius-pill:          9999px;
+      --radius-card:          28px;
+      --radius-inner:         18px;
+      --radius-sm:            12px;
+      --transition-smooth:    all 0.36s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--color-deep-navy);
+      color: var(--color-pure-white);
+      overflow-x: hidden;
+      position: relative;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ====================================================================
+       1. ANIMATED MOTION-BLUR GRADIENT
+       ==================================================================== */
+    .motion-blur-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: -3;
+      overflow: hidden;
+      background: #020b14;
+      pointer-events: none;
+    }
+
+    .streak-container {
+      position: absolute;
+      inset: -15%;
+      width: 130%;
+      height: 130%;
+      filter: blur(85px);
+      transition: transform 0.25s cubic-bezier(0.1, 1, 0.2, 1);
+      will-change: transform;
+    }
+
+    .streak {
+      position: absolute;
+      border-radius: 9999px;
+      pointer-events: none;
+      opacity: 0.65;
+      animation: streakFloat 22s infinite alternate ease-in-out;
+    }
+
+    .streak-blue {
+      width: 1050px;
+      height: 400px;
+      background: radial-gradient(ellipse at center, var(--color-cyan-glow) 0%, rgba(0, 180, 216, 0.04) 75%);
+      top: 6%;
+      left: -150px;
+      transform: rotate(-5deg);
+    }
+
+    .streak-magenta {
+      width: 1200px;
+      height: 460px;
+      background: radial-gradient(ellipse at center, var(--color-hot-magenta) 0%, rgba(216, 57, 149, 0.08) 75%);
+      top: 24%;
+      right: -160px;
+      transform: rotate(4deg);
+      animation-delay: -6s;
+      opacity: 0.58;
+    }
+
+    .streak-coral {
+      width: 950px;
+      height: 400px;
+      background: radial-gradient(ellipse at center, var(--color-coral-orange) 0%, rgba(255, 107, 74, 0.05) 75%);
+      top: 48%;
+      left: 12%;
+      transform: rotate(-2deg);
+      animation-delay: -12s;
+      opacity: 0.48;
+    }
+
+    .streak-peach {
+      width: 900px;
+      height: 360px;
+      background: radial-gradient(ellipse at center, var(--color-soft-peach) 0%, rgba(255, 170, 133, 0.04) 75%);
+      bottom: -60px;
+      right: 6%;
+      animation-delay: -17s;
+      opacity: 0.42;
+    }
+
+    @keyframes streakFloat {
+      0% { transform: translate3d(0, 0, 0) scaleX(1); }
+      50% { transform: translate3d(55px, 25px, 0) scaleX(1.09); }
+      100% { transform: translate3d(-45px, 40px, 0) scaleX(0.95); }
+    }
+
+
+
+    /* Fluted / Reeded Glass Texture Overlay */
+    .reeded-glass-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      pointer-events: none;
+      background-image: repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.042) 0px,
+        rgba(255, 255, 255, 0.042) 1.5px,
+        rgba(0, 0, 0, 0.12) 1.5px,
+        transparent 2px,
+        transparent 6px
+      );
+      backdrop-filter: blur(1.5px);
+      -webkit-backdrop-filter: blur(1.5px);
+      opacity: 0.94;
+    }
+
+    .film-grain {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+
+    /* ====================================================================
+       2. TYPOGRAPHY & TEXT ANIMATIONS
+       ==================================================================== */
+    h1, h2, h3, h4 {
+      font-family: 'Inter Tight', 'Manrope', sans-serif;
+    }
+
+    .hero-h1 {
+      font-size: clamp(2.9rem, 6.2vw, 5.6rem);
+      font-weight: 300;
+      line-height: 1.04;
+      letter-spacing: -0.035em;
+      color: var(--color-pure-white);
+      margin-bottom: 24px;
+      animation: textReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .hero-h1 span.title-gradient {
+      font-weight: 600;
+      background: linear-gradient(120deg, #ffffff 0%, #b8f0ff 40%, var(--color-soft-peach) 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradientShimmer 8s linear infinite alternate;
+    }
+
+    @keyframes gradientShimmer {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
+    }
+
+    @keyframes textReveal {
+      0% { opacity: 0; transform: translateY(28px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-h2 {
+      font-size: clamp(2.2rem, 3.8vw, 3.4rem);
+      font-weight: 300;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      color: var(--color-pure-white);
+      margin-bottom: 16px;
+    }
+
+    .body-soft {
+      font-size: clamp(1rem, 1.3vw, 1.18rem);
+      line-height: 1.68;
+      color: var(--color-text-muted);
+      font-weight: 400;
+      max-width: 640px;
+    }
+
+    .metadata-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-text-dim);
+      font-weight: 600;
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--color-accent-green);
+      box-shadow: 0 0 10px var(--color-accent-green);
+      display: inline-block;
+      animation: pulseGreen 2s infinite ease-in-out;
+    }
+
+    @keyframes pulseGreen {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.25); }
+    }
+
+    /* Scroll Reveal Motion Utility */
+    .reveal-on-scroll {
+      opacity: 0;
+      transform: translateY(34px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: opacity, transform;
+    }
+
+    .reveal-on-scroll.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .hairline-divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
+      margin: 90px 0;
+    }
+
+    /* ====================================================================
+       3. FLOATING CAPSULE NAVBAR
+       ==================================================================== */
+    .site-nav-container {
+      position: sticky;
+      top: 18px;
+      z-index: 1000;
+      max-width: 1440px;
+      margin: 18px auto 0;
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      animation: navFade 1s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes navFade {
+      0% { opacity: 0; transform: translateY(-16px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--color-pure-white);
+      font-weight: 700;
+      font-size: 21px;
+      letter-spacing: -0.02em;
+      transition: var(--transition-smooth);
+    }
+
+    .brand-logo:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .brand-icon-svg {
+      width: 28px;
+      height: 28px;
+      color: var(--color-pure-white);
+    }
+
+    .nav-capsule {
+      background: rgba(6, 26, 40, 0.65);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-pill);
+      box-shadow: var(--glass-shadow);
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition-smooth);
+    }
+
+    .nav-capsule:hover {
+      border-color: var(--glass-border-hover);
+    }
+
+    .nav-link {
+      color: var(--color-text-muted);
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 500;
+      padding: 8px 18px;
+      border-radius: var(--radius-pill);
+      transition: var(--transition-smooth);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: var(--color-pure-white);
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .nav-controls-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* ====================================================================
+       4. BUTTONS & CTAs: AUTHENTIC FROSTED GLASS & WHITE PILL (ZERO EMOJIS)
+       ==================================================================== */
+    .btn-pill-white {
+      background: #ffffff;
+      color: #04121e;
+      font-family: 'Manrope', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      padding: 12px 26px;
+      border-radius: var(--radius-pill);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.28), 0 0 16px rgba(255, 255, 255, 0.35);
+      transition: var(--transition-smooth);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-pill-white:hover {
+      background: #f0f7ff;
+      transform: translateY(-2px);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35), 0 0 24px rgba(255, 255, 255, 0.55);
+    }
+
+    .btn-pill-white svg {
+      width: 14px;
+      height: 14px;
+      stroke-width: 2.4;
+      transition: transform 0.25s ease;
+    }
+
+    .btn-pill-white:hover svg {
+      transform: translate(2px, -2px);
+    }
+
+    .btn-link-glass {
+      color: var(--color-pure-white);
+      font-family: 'Manrope', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 12px 22px;
+      border-radius: var(--radius-pill);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: var(--glass-blur-sm);
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+
+    .btn-link-glass:hover {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: var(--glass-border-hover);
+      transform: translateY(-2px);
+    }
+
+    .btn-link-glass svg {
+      width: 14px;
+      height: 14px;
+      stroke-width: 2.2;
+      transition: transform 0.25s ease;
+    }
+
+    .btn-link-glass:hover svg {
+      transform: translate(2px, -2px);
+    }
+
+    /* ====================================================================
+       5. HERO SECTION & TELEMETRY CARD SHOWCASE
+       ==================================================================== */
+    .hero-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 50px 32px 0;
+      min-height: calc(100vh - 90px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      align-items: center;
+      gap: 40px;
+      padding: 40px 0 60px;
+    }
+
+    .hero-cta-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 36px;
+      flex-wrap: wrap;
+    }
+
+    .badge-capsule {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-pill);
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-pure-white);
+      margin-bottom: 22px;
+      backdrop-filter: blur(14px);
+    }
+
+    /* Right Showcase Telemetry Card */
+    .hero-telemetry-card {
+      background: var(--glass-surface-card);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-card);
+      box-shadow: var(--glass-card-shadow);
+      padding: 26px 24px;
+      position: relative;
+      transition: var(--transition-smooth);
+    }
+
+    .hero-telemetry-card:hover {
+      border-color: var(--glass-border-hover);
+      transform: translateY(-4px);
+    }
+
+    .card-handle-pill {
+      width: 54px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: var(--radius-pill);
+      margin: 0 auto 16px;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--color-text-dim);
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .status-badge-live {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--color-pure-white);
+      font-weight: 600;
+    }
+
+    .swarm-agent-card {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-inner);
+      padding: 12px 16px;
+      margin-bottom: 10px;
+      transition: var(--transition-smooth);
+    }
+
+    .swarm-agent-card:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(0, 180, 216, 0.4);
+    }
+
+    .swarm-agent-card.featured-agent {
+      background: rgba(0, 180, 216, 0.12);
+      border-color: rgba(0, 180, 216, 0.45);
+    }
+
+    .agent-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .agent-title-text {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--color-pure-white);
+    }
+
+    .agent-role-sub {
+      font-size: 12px;
+      color: var(--color-text-muted);
+    }
+
+    .level-badge {
+      font-size: 11px;
+      color: var(--color-accent-green);
+      font-weight: 700;
+      background: rgba(57, 229, 140, 0.12);
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(57, 229, 140, 0.25);
+    }
+
+    .agent-slider-track {
+      width: 100%;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-pill);
+      position: relative;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .agent-slider-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--color-cyan-glow), var(--color-hot-magenta));
+      border-radius: var(--radius-pill);
+    }
+
+    /* ====================================================================
+       6. BOTTOM DOCK RIBBON (5 Columns)
+       ==================================================================== */
+    .hero-bottom-ribbon {
+      background: rgba(6, 26, 40, 0.65);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-card);
+      box-shadow: var(--glass-shadow);
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      margin-bottom: 30px;
+      overflow: hidden;
+    }
+
+    .ribbon-col {
+      padding: 22px 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      transition: var(--transition-smooth);
+    }
+
+    .ribbon-col:last-child {
+      border-right: none;
+    }
+
+    .ribbon-col:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .ribbon-icon-box {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-cyan-glow);
+      flex-shrink: 0;
+    }
+
+    .ribbon-icon-box svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .ribbon-text {
+      font-size: 12.5px;
+      line-height: 1.45;
+      color: var(--color-pure-white);
+      font-weight: 600;
+    }
+
+    /* ====================================================================
+       7. SECTION: THE 5 AUTONOMOUS AGENTS (Deep Dive Grid)
+       ==================================================================== */
+    .section-wrap {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 80px 32px;
+    }
+
+    .section-header-center {
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto 56px;
+    }
+
+    .agents-grid-5 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .agent-feature-card {
+      background: var(--glass-surface-card);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-card);
+      box-shadow: var(--glass-shadow);
+      padding: 32px 28px;
+      transition: var(--transition-smooth);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .agent-feature-card:hover {
+      border-color: var(--glass-border-hover);
+      transform: translateY(-6px);
+      box-shadow: 0 34px 80px rgba(0, 0, 0, 0.55);
+    }
+
+    .card-icon-box {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 22px;
+      color: var(--color-cyan-glow);
+    }
+
+    .card-icon-box svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .agent-card-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+      color: var(--color-pure-white);
+    }
+
+    .agent-card-desc {
+      font-size: 13.5px;
+      line-height: 1.62;
+      color: var(--color-text-muted);
+      margin-bottom: 20px;
+    }
+
+    .agent-cap-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 16px;
+    }
+
+    .agent-cap-item {
+      font-size: 12.5px;
+      color: var(--color-text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .agent-cap-item svg {
+      width: 13px;
+      height: 13px;
+      color: var(--color-accent-green);
+      flex-shrink: 0;
+    }
+
+    /* ====================================================================
+       8. SECTION: WHY SCALYN.SI VS TRADITIONAL AGENCIES
+       ==================================================================== */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      margin-top: 40px;
+    }
+
+    .compare-card {
+      background: var(--glass-surface-card);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-card);
+      padding: 36px 32px;
+    }
+
+    .compare-card.positive {
+      border-color: rgba(0, 180, 216, 0.45);
+      background: rgba(6, 34, 52, 0.68);
+      box-shadow: 0 24px 60px rgba(0, 180, 216, 0.18);
+    }
+
+    .compare-point {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .compare-point svg {
+      width: 16px;
+      height: 16px;
+      margin-top: 3px;
+      flex-shrink: 0;
+    }
+
+    /* ====================================================================
+       9. CALL-TO-ACTION BANNER & FOOTER
+       ==================================================================== */
+    .cta-banner-card {
+      background: linear-gradient(135deg, rgba(8, 36, 56, 0.78) 0%, rgba(216, 57, 149, 0.18) 100%);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-card);
+      padding: 56px 40px;
+      text-align: center;
+      box-shadow: var(--glass-card-shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ====================================================================
+       GRAND FOOTER ARCHITECTURE (Inspired by reference aesthetic)
+       ==================================================================== */
+    .site-footer-grand {
+      position: relative;
+      background: linear-gradient(180deg, transparent 0%, rgba(4, 20, 32, 0.75) 20%, rgba(2, 11, 20, 0.98) 100%);
+      padding: 100px 32px 20px;
+      overflow: hidden;
+      margin-top: 60px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .footer-ambient-glow {
+      position: absolute;
+      width: 700px;
+      height: 350px;
+      background: radial-gradient(ellipse at center, rgba(0, 180, 216, 0.22) 0%, rgba(216, 57, 149, 0.12) 50%, transparent 75%);
+      filter: blur(80px);
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .footer-content-wrap {
+      max-width: 1380px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* FAQ PILL ACCORDIONS (Inspired by top of ref img) */
+    .footer-faq-section {
+      max-width: 820px;
+      margin: 0 auto 80px;
+    }
+
+    .faq-pill-card {
+      background: rgba(255, 255, 255, 0.09);
+      backdrop-filter: blur(24px) saturate(190%);
+      -webkit-backdrop-filter: blur(24px) saturate(190%);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 9999px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+      margin-bottom: 14px;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .faq-pill-card:hover {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.45);
+      transform: translateY(-2px);
+    }
+
+    .faq-pill-card.active {
+      border-radius: 22px;
+      background: rgba(6, 28, 44, 0.82);
+      border-color: rgba(0, 180, 216, 0.45);
+      box-shadow: 0 16px 40px rgba(0, 180, 216, 0.2), inset 0 1px 1.5px rgba(255, 255, 255, 0.4);
+    }
+
+    .faq-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 28px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--color-pure-white);
+      user-select: none;
+    }
+
+    .faq-chevron-icon {
+      width: 18px;
+      height: 18px;
+      color: var(--color-pure-white);
+      stroke-width: 2.2;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      flex-shrink: 0;
+    }
+
+    .faq-pill-card.active .faq-chevron-icon {
+      transform: rotate(180deg);
+      color: var(--color-cyan-glow);
+    }
+
+    .faq-answer-container {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.38s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+      opacity: 0;
+      padding: 0 28px;
+    }
+
+    .faq-pill-card.active .faq-answer-container {
+      max-height: 220px;
+      opacity: 1;
+      padding: 0 28px 20px 28px;
+    }
+
+    .faq-answer-text {
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: var(--color-text-muted);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 14px;
+    }
+
+    /* FOOTER MULTI-COLUMN NAVIGATION */
+    .footer-columns-grid {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr 1fr 1fr;
+      gap: 50px;
+      padding-bottom: 70px;
+    }
+
+    .footer-brand-box {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .footer-tagline {
+      font-size: 13.5px;
+      line-height: 1.62;
+      color: var(--color-text-muted);
+      margin: 18px 0 24px;
+      max-width: 320px;
+    }
+
+    .social-icons-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .social-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--glass-border);
+      color: var(--color-pure-white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      transition: var(--transition-smooth);
+    }
+
+    .social-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: var(--glass-border-hover);
+      color: var(--color-cyan-glow);
+      transform: translateY(-2px);
+    }
+
+    .social-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .footer-copyright {
+      font-size: 12px;
+      color: var(--color-text-dim);
+    }
+
+    .footer-col-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--color-pure-white);
+      margin-bottom: 18px;
+      letter-spacing: -0.01em;
+    }
+
+    .footer-links-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+    }
+
+    .footer-link-item a {
+      color: var(--color-text-muted);
+      text-decoration: none;
+      font-size: 13.5px;
+      transition: var(--transition-smooth);
+      display: inline-block;
+    }
+
+    .footer-link-item a:hover {
+      color: var(--color-cyan-glow);
+      transform: translateX(4px);
+    }
+
+    /* MASSIVE BOTTOM WATERMARK (Inspired by "vibezero" in ref img) */
+    .footer-watermark-row {
+      position: relative;
+      text-align: center;
+      margin-top: -10px;
+      margin-bottom: -25px;
+      overflow: hidden;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .footer-watermark-text {
+      font-family: 'Inter Tight', 'Manrope', sans-serif;
+      font-size: clamp(5.5rem, 17vw, 16.5rem);
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      line-height: 0.82;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.075) 0%, rgba(255, 255, 255, 0.012) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+      white-space: nowrap;
+    }
+
+    /* RESPONSIVE MEDIA QUERIES */
+    @media (max-width: 1100px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+        padding: 20px 0 40px;
+      }
+      .hero-bottom-ribbon {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .agents-grid-5 {
+        grid-template-columns: 1fr 1fr;
+      }
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+      .footer-columns-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 36px;
+      }
+    }
+
+    @media (max-width: 820px) {
+      .site-nav-container {
+        padding: 0 20px;
+      }
+      .nav-capsule {
+        display: none;
+      }
+      .hero-container {
+        padding: 30px 20px 0;
+      }
+      .hero-bottom-ribbon {
+        grid-template-columns: 1fr;
+        border-radius: var(--radius-inner);
+      }
+      .ribbon-col {
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .ribbon-col:last-child {
+        border-bottom: none;
+      }
+      .section-wrap {
+        padding: 60px 20px;
+      }
+      .agents-grid-5 {
+        grid-template-columns: 1fr;
+      }
+      .footer-columns-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+      }
+      .footer-brand-box {
+        align-items: center;
+        text-align: center;
+      }
+      .footer-tagline {
+        margin: 14px auto 20px;
+      }
+      .social-icons-row {
+        justify-content: center;
+      }
+      .footer-watermark-text {
+        font-size: clamp(3.8rem, 18vw, 7.5rem);
+      }
+      .faq-pill-card {
+        border-radius: 20px;
+      }
+      .faq-header-row {
+        padding: 16px 20px;
+        font-size: 14px;
+      }
+      .faq-pill-card.active .faq-answer-container {
+        padding: 0 20px 18px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BACKGROUND: MOTION-BLUR LONG-EXPOSURE GRADIENT & REEDED FLUTED GLASS -->
+  <div class="motion-blur-backdrop">
+    <div class="streak-container" id="parallax-streaks">
+      <div class="streak streak-blue"></div>
+      <div class="streak streak-magenta"></div>
+      <div class="streak streak-coral"></div>
+      <div class="streak streak-peach"></div>
+    </div>
+  </div>
+  <div class="reeded-glass-overlay"></div>
+  <div class="film-grain"></div>
+
+
+
+  <!-- FLOATING CAPSULE NAVBAR -->
+  <header class="site-nav-container">
+    <a href="#" class="brand-logo">
+      <svg class="brand-icon-svg" viewBox="0 0 28 28" fill="none">
+        <path d="M7 19.5C4 19.5 2 17.5 2 14C2 10.5 4.5 8 8 8C11.5 8 13.5 10.5 13.5 14C13.5 17.5 15.5 19.5 19 19.5C22.5 19.5 25.5 17.5 25.5 14C25.5 10.5 23 8 19.5 8" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+      </svg>
+      <span>scalyn.si</span>
+    </a>
+
+    <!-- Center Nav Capsule with Green Live Dot -->
+    <nav class="nav-capsule">
+      <a href="#home" class="nav-link active">
+        <span class="live-dot"></span>
+        <span>Home</span>
+      </a>
+      <a href="#agents" class="nav-link">The 5 Agents</a>
+      <a href="#why-us" class="nav-link">Why scalyn.si</a>
+      <a href="#about" class="nav-link">About us</a>
+    </nav>
+
+    <!-- Right Controls: Navigate Directly to Dashboard -->
+    <div class="nav-controls-right">
+      <a href="/dashboard.html" class="btn-pill-white">
+        <span>Launch Dashboard</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <line x1="7" y1="17" x2="17" y2="7"/>
+          <polyline points="7 7 17 7 17 17"/>
+        </svg>
+      </a>
+    </div>
+  </header>
+
+  <!-- ====================================================================
+       HERO COMPOSITION (Landing Page Focus: About Startup & Autonomous Swarm)
+       ==================================================================== -->
+  <main class="hero-container" id="home">
+    <div class="hero-grid">
+      
+      <!-- Left Column: Kinetic Typography, Subtitle & Action Buttons -->
+      <div>
+        <div class="badge-capsule">
+          <span class="live-dot"></span>
+          <span>scalyn.si Collective · 5 Autonomous Agents Coordinated</span>
+        </div>
+
+        <h1 class="hero-h1">
+          Autonomous Market Discovery
+          <span class="title-gradient">&amp; Growth For Any Startup</span>
+        </h1>
+
+        <p class="body-soft">
+          Meet your 5-agent AI growth engine. Scout qualified buyers, audit digital friction, generate marketing kits, and upscale small businesses without human burnout.
+        </p>
+
+        <div class="hero-cta-group">
+          <!-- Primary CTA: Direct Navigation to Dashboard -->
+          <a href="/dashboard.html" class="btn-pill-white">
+            <span>Launch Free Scout</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <line x1="7" y1="17" x2="17" y2="7"/>
+              <polyline points="7 7 17 7 17 17"/>
+            </svg>
+          </a>
+
+          <!-- Secondary CTA: Explore The 5 Agents -->
+          <a href="#agents" class="btn-link-glass">
+            <span>Meet The 5 Agents</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <polyline points="19 12 12 19 5 12"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Right Column: Interactive Multi-Agent Swarm Telemetry Showcase -->
+      <div>
+        <div class="hero-telemetry-card" id="hero-card-tilt">
+          <!-- Center Pill Handle -->
+          <div class="card-handle-pill"></div>
+
+          <!-- Status Header Row -->
+          <div class="status-row">
+            <div class="status-badge-live">
+              <span class="live-dot"></span>
+              <span>Multi-Agent System Status: Active</span>
+            </div>
+            <span style="font-size: 11px; color: var(--color-cyan-glow); font-weight: 700;">5 AGENTS ONLINE</span>
+          </div>
+
+          <!-- Agent 1 Card -->
+          <div class="swarm-agent-card">
+            <div class="agent-header-row">
+              <div>
+                <div class="agent-title-text">Agent 1: Business Analyst</div>
+                <div class="agent-role-sub">Diagnosis &amp; Monetization Models</div>
+              </div>
+              <span class="level-badge">Ready</span>
+            </div>
+            <div class="agent-slider-track">
+              <div class="agent-slider-fill" style="width: 100%;"></div>
+            </div>
+          </div>
+
+          <!-- Agent 2 Card (Highlighted Star) -->
+          <div class="swarm-agent-card featured-agent">
+            <div class="agent-header-row">
+              <div>
+                <div class="agent-title-text" style="color: var(--color-cyan-glow);">Agent 2: Target Market Researcher</div>
+                <div class="agent-role-sub">Live ICP &amp; Lead Scout (Active)</div>
+              </div>
+              <span class="level-badge" style="background: rgba(0, 180, 216, 0.2); color: var(--color-cyan-glow); border-color: rgba(0, 180, 216, 0.4);">
+                Core Engine
+              </span>
+            </div>
+            <div class="agent-slider-track">
+              <div class="agent-slider-fill" style="width: 90%;"></div>
+            </div>
+          </div>
+
+          <!-- Agent 3 Card -->
+          <div class="swarm-agent-card">
+            <div class="agent-header-row">
+              <div>
+                <div class="agent-title-text">Agent 3: Marketing Agent</div>
+                <div class="agent-role-sub">Campaigns &amp; Channel Playbooks</div>
+              </div>
+              <span class="level-badge">Ready</span>
+            </div>
+            <div class="agent-slider-track">
+              <div class="agent-slider-fill" style="width: 85%;"></div>
+            </div>
+          </div>
+
+          <!-- Agent 4 Card -->
+          <div class="swarm-agent-card">
+            <div class="agent-header-row">
+              <div>
+                <div class="agent-title-text">Agent 4: Content Creator</div>
+                <div class="agent-role-sub">Canva Briefs &amp; Video Scripts</div>
+              </div>
+              <span class="level-badge">Ready</span>
+            </div>
+            <div class="agent-slider-track">
+              <div class="agent-slider-fill" style="width: 75%;"></div>
+            </div>
+          </div>
+
+          <!-- Agent 5 Card -->
+          <div class="swarm-agent-card" style="margin-bottom: 0;">
+            <div class="agent-header-row">
+              <div>
+                <div class="agent-title-text">Agent 5: Sales Lead</div>
+                <div class="agent-role-sub">Consultative Outreach &amp; CRM Sync</div>
+              </div>
+              <span class="level-badge">Ready</span>
+            </div>
+            <div class="agent-slider-track">
+              <div class="agent-slider-fill" style="width: 95%;"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ====================================================================
+         BOTTOM 5-COLUMN FEATURE STRIP (Hero Dock)
+         ==================================================================== -->
+    <div class="hero-bottom-ribbon">
+      <div class="ribbon-col">
+        <div class="ribbon-icon-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+            <path d="M2 12h20"/>
+          </svg>
+        </div>
+        <div class="ribbon-text">
+          Autonomous ICP &amp;<br>Audience Profiling
+        </div>
+      </div>
+
+      <div class="ribbon-col">
+        <div class="ribbon-icon-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </div>
+        <div class="ribbon-text">
+          Omnichannel Lead &amp;<br>Community Scouting
+        </div>
+      </div>
+
+      <div class="ribbon-col">
+        <div class="ribbon-icon-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </div>
+        <div class="ribbon-text">
+          5 Universal Friction &amp;<br>Need Signal Audits
+        </div>
+      </div>
+
+      <div class="ribbon-col">
+        <div class="ribbon-icon-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
+        <div class="ribbon-text">
+          Single Master Excel<br>Database Sync
+        </div>
+      </div>
+
+      <div class="ribbon-col">
+        <div class="ribbon-icon-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+          </svg>
+        </div>
+        <div class="ribbon-text">
+          Consultative, Non-Spam<br>Outreach Hooks
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="hairline-divider"></div>
+
+  <!-- ====================================================================
+       SECTION: THE 5 AUTONOMOUS GROWTH AGENTS (Deep Dive)
+       ==================================================================== -->
+  <section class="section-wrap" id="agents">
+    <div class="section-header-center reveal-on-scroll">
+      <div class="metadata-label">End-to-End Orchestration</div>
+      <h2 class="section-h2">The 5 Autonomous Growth Agents</h2>
+      <p class="body-soft" style="margin: 0 auto;">
+        No single agent can replace a specialized growth team. scalyn.si operates as an interlocking collective, passing verified market intelligence from strategic diagnosis to closed contracts.
+      </p>
+    </div>
+
+    <div class="agents-grid-5">
+      
+      <!-- Agent 1 -->
+      <div class="agent-feature-card reveal-on-scroll">
+        <div>
+          <div class="card-icon-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+              <path d="M22 12A10 10 0 0 0 12 2v10z"/>
+            </svg>
+          </div>
+          <div class="metadata-label" style="color: var(--color-cyan-glow);">Agent 01 // Ingestion</div>
+          <h3 class="agent-card-title">Business Analyst</h3>
+          <p class="agent-card-desc">
+            Ingests raw startup briefs, maps monetization models, scores operational bottlenecks, and calculates true customer acquisition economics.
+          </p>
+        </div>
+        <ul class="agent-cap-list">
+          <li class="agent-cap-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
+            Automated SWOT &amp; Unit Economics
+          </li>
+          <li class="agent-cap-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
+            Bottleneck Priority Matrix
+          </li>
+        </ul>
+      </div>
+
+      <!-- Agent 2 (Core Scout) -->
+      <div class="agent-feature-card reveal-on-scroll" style="border-color: rgba(0, 180, 216, 0.45); background: rgba(6, 32, 50, 0.65);">
+        <div>
+          <div class="card-icon-box" style="color: var(--color-accent-green);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </div>
+          <div class="metadata-label" style="color: var(--color-accent-green);">Agent 02 // Core Scout</div>
+          <h3 class="agent-card-title">Target Market Researcher</h3>
+          <p class="agent-card-desc">
+            Autonomously crawls websites, executes dynamic Boolean matrices, scouts LinkedIn and Reddit, and detects 5 universal friction signals.
+          </p>
+        </div>
+        <ul class="agent-cap-list">
+          <li class="agent-cap-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
+            Real Live Web Search (Zero Placeholders)
+          </li>
+          <li class="agent-cap-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
+            Single Persistent Master Excel Sync
+          </li>
+        </ul>
+      </div>
+
+      <!-- Agent 3 -->
+      <div class="agent-feature-card reveal-on-scroll">
+        <div>
+          <div class="card-icon-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+          </div>
+          <div class="metadata-label">Agent 03 // Strategy</div>
+          <h3 class="agent-card-title">Marketing Agent</h3>
+          <p class="agent-card-desc">
+            Takes researched buyer personas and crafts positioning hooks, omnichannel campaign strategies, and budget allocations tailored to the niche.
+          </p>
+        </div>
+        <ul class="agent-cap-list">
+          <li class="agent-cap-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
+            Multi-Angle Hook Engineering
+          </li>
+          <li class="agent-cap-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
+            Omnichannel Playbook Generation
+          </li>
+        </ul>
+      </div>
+
+      <!-- Agent 4 -->
+      <div class="agent-feature-card reveal-on-scroll">
+        <div>
+          <div class="card-icon-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+          <div class="metadata-label">Agent 04 // Creative</div>
+          <h3 class="agent-card-title">Content Creator</h3>
+          <p class="agent-card-desc">
+            Coordinates 4 specialized sub-agents to deliver social copy, Canva design briefs, short-form video scripts, and localized messaging.
+          </p>
+        </div>
+        <ul class="agent-cap-list">
+          <li class="agent-cap-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
+            Short-Form Video Scriptwriting
+          </li>
+          <li class="agent-cap-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
+            Bilingual Messaging &amp; Canva Briefs
+          </li>
+        </ul>
+      </div>
+
+      <!-- Agent 5 -->
+      <div class="agent-feature-card reveal-on-scroll">
+        <div>
+          <div class="card-icon-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+          </div>
+          <div class="metadata-label">Agent 05 // Conversion</div>
+          <h3 class="agent-card-title">Sales Lead &amp; Outreach</h3>
+          <p class="agent-card-desc">
+            Converts qualified leads into closed revenue by drafting consultative outreach sequences with verified hooks directly in CRM and Excel.
+          </p>
+        </div>
+        <ul class="agent-cap-list">
+          <li class="agent-cap-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
+            Spam-Free Consultative Outreach
+          </li>
+          <li class="agent-cap-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
+            Google Sheets &amp; Excel Bridge
+          </li>
+        </ul>
+      </div>
+
+      <!-- Direct Dashboard Action Card -->
+      <div class="agent-feature-card reveal-on-scroll" style="background: linear-gradient(135deg, rgba(216, 57, 149, 0.16) 0%, rgba(0, 180, 216, 0.16) 100%); border-color: rgba(216, 57, 149, 0.4);">
+        <div>
+          <div class="card-icon-box" style="color: var(--color-hot-magenta);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+          </div>
+          <div class="metadata-label" style="color: var(--color-hot-magenta);">Live Operations</div>
+          <h3 class="agent-card-title">Zero Human Burnout</h3>
+          <p class="agent-card-desc">
+            Test the live multi-agent scout on any startup website. Crawl domains, extract ICPs, and sync verified leads directly.
+          </p>
+        </div>
+        <a href="/dashboard.html" class="btn-pill-white" style="margin-top: 14px; justify-content: center;">
+          <span>Open Live Dashboard</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <line x1="7" y1="17" x2="17" y2="7"/>
+            <polyline points="7 7 17 7 17 17"/>
+          </svg>
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="hairline-divider"></div>
+
+  <!-- ====================================================================
+       SECTION: WHY SCALYN.SI (Comparison)
+       ==================================================================== -->
+  <section class="section-wrap" id="why-us">
+    <div class="section-header-center reveal-on-scroll">
+      <div class="metadata-label">The Paradigm Shift</div>
+      <h2 class="section-h2">Why Founders Choose scalyn.si</h2>
+      <p class="body-soft" style="margin: 0 auto;">
+        Replacing fragmented freelancer coordination, manual lead scraping, and 5-figure agency retainers with a continuous autonomous pipeline.
+      </p>
+    </div>
+
+    <div class="comparison-grid">
+      <!-- Traditional Agencies -->
+      <div class="compare-card reveal-on-scroll">
+        <div class="metadata-label" style="color: #ff6b4a; margin-bottom: 12px;">Traditional Growth Agencies</div>
+        <h3 style="font-size: 22px; font-weight: 700; margin-bottom: 20px;">Manual, Slow &amp; Expensive</h3>
+
+        <div class="compare-point" style="color: var(--color-text-muted);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ff6b4a" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <span>$5,000 to $15,000 monthly retainers with 3-month setup delays</span>
+        </div>
+        <div class="compare-point" style="color: var(--color-text-muted);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ff6b4a" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <span>Manual junior SDR scraping leads with generic email spam templates</span>
+        </div>
+        <div class="compare-point" style="color: var(--color-text-muted);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ff6b4a" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <span>Siloed work: copywriters, designers, and sales reps work in isolation</span>
+        </div>
+        <div class="compare-point" style="color: var(--color-text-muted);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ff6b4a" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <span>Zero transparency on real market intent signals or competitor friction</span>
+        </div>
+      </div>
+
+      <!-- scalyn.si Swarm -->
+      <div class="compare-card positive reveal-on-scroll">
+        <div class="metadata-label" style="color: var(--color-cyan-glow); margin-bottom: 12px;">scalyn.si Autonomous Collective</div>
+        <h3 style="font-size: 22px; font-weight: 700; margin-bottom: 20px;">Continuous, Intelligent &amp; Integrated</h3>
+
+        <div class="compare-point" style="color: var(--color-pure-white);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#39e58c" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Deploy a coordinated 5-agent growth swarm instantly from any website URL</span>
+        </div>
+        <div class="compare-point" style="color: var(--color-pure-white);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#39e58c" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Automated signal detection audits real domains for operational bottlenecks</span>
+        </div>
+        <div class="compare-point" style="color: var(--color-pure-white);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#39e58c" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Integrated handoffs: Business analysis directly informs content &amp; sales sequences</span>
+        </div>
+        <div class="compare-point" style="color: var(--color-pure-white);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#39e58c" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Single persistent master Excel database with 1-click sync and zero duplicate leads</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="hairline-divider"></div>
+
+  <!-- ====================================================================
+       SECTION: ABOUT US & FOUNDING VISION
+       ==================================================================== -->
+  <section class="section-wrap" id="about">
+    <div class="section-header-center reveal-on-scroll">
+      <div class="metadata-label">Our Story &amp; Mission</div>
+      <h2 class="section-h2">Democratizing Autonomous Growth</h2>
+      <p class="body-soft" style="margin: 0 auto 36px;">
+        Early-stage founders spend over 60% of their working hours manually prospecting, auditing competitors, and coordinating marketing freelancers. scalyn.si was engineered to give every founder the firepower of a full-scale corporate acquisition team.
+      </p>
+
+      <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
+        <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); padding: 14px 24px; border-radius: var(--radius-inner); text-align: center;">
+          <div style="font-size: 24px; font-weight: 700; color: var(--color-cyan-glow);">100%</div>
+          <div style="font-size: 11.5px; color: var(--color-text-dim);">Autonomous Loop</div>
+        </div>
+
+        <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); padding: 14px 24px; border-radius: var(--radius-inner); text-align: center;">
+          <div style="font-size: 24px; font-weight: 700; color: var(--color-accent-green);">5 Agents</div>
+          <div style="font-size: 11.5px; color: var(--color-text-dim);">Unified Collective</div>
+        </div>
+
+        <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); padding: 14px 24px; border-radius: var(--radius-inner); text-align: center;">
+          <div style="font-size: 24px; font-weight: 700; color: var(--color-soft-peach);">Zero Spam</div>
+          <div style="font-size: 11.5px; color: var(--color-text-dim);">Consultative Hooks</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Final High-Impact CTA Banner -->
+    <div class="cta-banner-card reveal-on-scroll">
+      <h2 style="font-size: clamp(2rem, 3.4vw, 3rem); font-weight: 400; margin-bottom: 16px;">
+        Ready to scale your pipeline autonomously?
+      </h2>
+      <p class="body-soft" style="margin: 0 auto 32px;">
+        Open the live operations dashboard to inspect your website, scout high-intent decision makers, and sync your master lead database.
+      </p>
+      <a href="/dashboard.html" class="btn-pill-white" style="padding: 14px 34px; font-size: 15px;">
+        <span>Open Live Operations Dashboard</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <line x1="7" y1="17" x2="17" y2="7"/>
+          <polyline points="7 7 17 7 17 17"/>
+        </svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- ====================================================================
+       GRAND FOOTER ARCHITECTURE (Inspired by Reference Design)
+       ==================================================================== -->
+  <footer class="site-footer-grand" id="footer">
+    <div class="footer-ambient-glow"></div>
+
+    <div class="footer-content-wrap">
+      
+      <!-- FAQ Accordion Pill Container (Inspired by top of ref img) -->
+      <div class="footer-faq-section reveal-on-scroll">
+        <div style="text-align: center; margin-bottom: 26px;">
+          <div class="metadata-label">Common Inquiries</div>
+          <h3 style="font-size: 24px; font-weight: 600; margin-top: 4px;">Frequently Asked Questions</h3>
+        </div>
+
+        <!-- FAQ Item 1 -->
+        <div class="faq-pill-card active" onclick="toggleFaq(this)">
+          <div class="faq-header-row">
+            <span>How does the autonomous 5-agent swarm scout qualified prospects?</span>
+            <svg class="faq-chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-answer-container">
+            <p class="faq-answer-text">
+              Agent 2 (Target Market Researcher) executes live internet searches across DuckDuckGo, Bing, LinkedIn, and community platforms using dynamic Boolean query matrices. It audits discovered websites for technical friction and detects concrete purchase intent signals with zero synthetic placeholders.
+            </p>
+          </div>
+        </div>
+
+        <!-- FAQ Item 2 -->
+        <div class="faq-pill-card" onclick="toggleFaq(this)">
+          <div class="faq-header-row">
+            <span>Is my startup brief, prospect list, and prompt history secure?</span>
+            <svg class="faq-chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-answer-container">
+            <p class="faq-answer-text">
+              Yes. All discovered leads, competitor vulnerability analyses, and sales hooks remain strictly within your local environment. Data is persisted into your dedicated Master Excel database (<code>master_lead_database.xlsx</code>) with zero external telemetry leakage.
+            </p>
+          </div>
+        </div>
+
+        <!-- FAQ Item 3 -->
+        <div class="faq-pill-card" onclick="toggleFaq(this)">
+          <div class="faq-header-row">
+            <span>How does the Single Master Excel prevent duplicate contacts?</span>
+            <svg class="faq-chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-answer-container">
+            <p class="faq-answer-text">
+              Our <code>MasterExcelManager</code> automatically fingerprints every discovered prospect using their Verified URL and entity name before appending. Duplicate records from repeat runs are safely skipped, and execution statistics are logged into a separate Run History sheet.
+            </p>
+          </div>
+        </div>
+
+        <!-- FAQ Item 4 -->
+        <div class="faq-pill-card" onclick="toggleFaq(this)">
+          <div class="faq-header-row">
+            <span>Can scalyn.si work for any startup industry or business model?</span>
+            <svg class="faq-chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-answer-container">
+            <p class="faq-answer-text">
+              Yes. Our QueryPlanner and SignalDetector automatically adapt to B2B SaaS, local services, tuition coaching centers, boutique agencies, and D2C brands, formulating industry-tailored search queries dynamically.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Multi-Column Grid -->
+      <div class="footer-columns-grid reveal-on-scroll">
+        <!-- Brand & Mission Column -->
+        <div class="footer-brand-box">
+          <a href="#" class="brand-logo" style="margin-bottom: 2px;">
+            <svg class="brand-icon-svg" viewBox="0 0 28 28" fill="none">
+              <path d="M7 19.5C4 19.5 2 17.5 2 14C2 10.5 4.5 8 8 8C11.5 8 13.5 10.5 13.5 14C13.5 17.5 15.5 19.5 19 19.5C22.5 19.5 25.5 17.5 25.5 14C25.5 10.5 23 8 19.5 8" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+            </svg>
+            <span>scalyn.si</span>
+          </a>
+
+          <p class="footer-tagline">
+            Autonomous market intelligence and client acquisition for ambitious founders and small businesses worldwide.
+          </p>
+
+          <!-- Social Icons (Clean Frosted Glass Monograms) -->
+          <div class="social-icons-row">
+            <a href="https://x.com" target="_blank" rel="noopener noreferrer" class="social-btn" title="X (Twitter)">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" class="social-btn" title="LinkedIn">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>
+            </a>
+            <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="social-btn" title="GitHub">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/></svg>
+            </a>
+            <a href="https://discord.com" target="_blank" rel="noopener noreferrer" class="social-btn" title="Discord">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+            </a>
+          </div>
+
+          <div class="footer-copyright">
+            © scalyn.si 2026 · All Rights Reserved
+          </div>
+        </div>
+
+        <!-- Col 1: Product / The 5 Agents -->
+        <div>
+          <div class="footer-col-title">The 5 Agents</div>
+          <ul class="footer-links-list">
+            <li class="footer-link-item"><a href="#agents">Agent 1: Business Analyst</a></li>
+            <li class="footer-link-item"><a href="#agents">Agent 2: Market Researcher</a></li>
+            <li class="footer-link-item"><a href="#agents">Agent 3: Marketing Agent</a></li>
+            <li class="footer-link-item"><a href="#agents">Agent 4: Content Creator</a></li>
+            <li class="footer-link-item"><a href="#agents">Agent 5: Sales Sequences</a></li>
+            <li class="footer-link-item"><a href="/dashboard.html">Live Multi-Agent Swarm</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 2: Platform & Core -->
+        <div>
+          <div class="footer-col-title">Platform &amp; Core</div>
+          <ul class="footer-links-list">
+            <li class="footer-link-item"><a href="/dashboard.html">Operations Cockpit</a></li>
+            <li class="footer-link-item"><a href="/dashboard.html">Auto-Inspect Website</a></li>
+            <li class="footer-link-item"><a href="/dashboard.html">Signal Detector Engine</a></li>
+            <li class="footer-link-item"><a href="/api/download-excel">Master Excel Database</a></li>
+            <li class="footer-link-item"><a href="#why-us">System Architecture</a></li>
+            <li class="footer-link-item"><a href="/dashboard.html">Terminal Telemetry</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 3: Solutions -->
+        <div>
+          <div class="footer-col-title">Solutions</div>
+          <ul class="footer-links-list">
+            <li class="footer-link-item"><a href="#about">B2B SaaS &amp; Automation</a></li>
+            <li class="footer-link-item"><a href="#about">Tuition &amp; Exam Coaching</a></li>
+            <li class="footer-link-item"><a href="#about">Boutique Agencies</a></li>
+            <li class="footer-link-item"><a href="#about">Private Medical &amp; Dental</a></li>
+            <li class="footer-link-item"><a href="#about">D2C &amp; E-Commerce</a></li>
+            <li class="footer-link-item"><a href="/dashboard.html">Founding Cohort Pilot</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Massive Brand Watermark Anchor (Inspired by "vibezero" in ref img) -->
+      <div class="footer-watermark-row">
+        <span class="footer-watermark-text">scalyn.si</span>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- ====================================================================
+       INTERACTIVE JAVASCRIPT: PARALLAX, 3D CARD TILT & SCROLL OBSERVER
+       ==================================================================== -->
+  <script>
+    // 1. Mouse Parallax on Background Horizontal Motion Streaks
+    const streakContainer = document.getElementById('parallax-streaks');
+    let targetX = 0, targetY = 0;
+    let currentX = 0, currentY = 0;
+
+    window.addEventListener('mousemove', (e) => {
+      const halfW = window.innerWidth / 2;
+      const halfH = window.innerHeight / 2;
+      targetX = (e.clientX - halfW) * 0.035;
+      targetY = (e.clientY - halfH) * 0.035;
+    });
+
+    function renderParallax() {
+      currentX += (targetX - currentX) * 0.08;
+      currentY += (targetY - currentY) * 0.08;
+      if (streakContainer) {
+        streakContainer.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+      }
+      requestAnimationFrame(renderParallax);
+    }
+    requestAnimationFrame(renderParallax);
+
+    // 2. Interactive 3D Card Tilt Effect on Hero Telemetry Card
+    const heroCard = document.getElementById('hero-card-tilt');
+    if (heroCard) {
+      heroCard.addEventListener('mousemove', (e) => {
+        const rect = heroCard.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = ((y - centerY) / centerY) * -6;
+        const rotateY = ((x - centerX) / centerX) * 6;
+        heroCard.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+      });
+
+      heroCard.addEventListener('mouseleave', () => {
+        heroCard.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0)';
+      });
+    }
+
+    // 3. Object Scroll Reveal Animations via IntersectionObserver
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.15
+    };
+
+    const scrollObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.reveal-on-scroll').forEach(el => {
+      scrollObserver.observe(el);
+    });
+
+    // 4. FAQ Pill Accordion Toggle
+    function toggleFaq(card) {
+      card.classList.toggle('active');
+    }
+  </script>
+</body>
+</html>

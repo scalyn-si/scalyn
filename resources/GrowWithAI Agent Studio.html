@@ -1,0 +1,735 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GrowWithAI Agent Studio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: app shell — sticky header with tabs; Run view = intake + pipeline rail on the left, agent outputs on the right. Agents read like a field ledger. */
+:root{
+  --bg:#F3F5F1; --surface:#FFFFFF; --sunk:#E8ECE5; --line:#D3DACF;
+  --fg:#15211C; --muted:#5A6862; --accent:#0F6B57; --accent-ink:#FFFFFF; --accent-soft:#DCEDE6;
+  --run:#C98A0B; --run-soft:#FBEFD2; --bad:#B4382C; --bad-soft:#F7DFDB; --good:#2E7D4F;
+  --new:#5B4BB5; --new-soft:#E7E3F7;
+  --f-display:"Familjen Grotesk","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Figtree","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1613; --surface:#16201C; --sunk:#1D2925; --line:#2B3833;
+  --fg:#E4ECE7; --muted:#97A69F; --accent:#4DBB9C; --accent-ink:#06261E; --accent-soft:#16352D;
+  --run:#E5AE3D; --run-soft:#3A2E12; --bad:#EE8577; --bad-soft:#3D1F1B; --good:#6BCB8F;
+  --new:#A89BF0; --new-soft:#27234A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1613; --surface:#16201C; --sunk:#1D2925; --line:#2B3833;
+  --fg:#E4ECE7; --muted:#97A69F; --accent:#4DBB9C; --accent-ink:#06261E; --accent-soft:#16352D;
+  --run:#E5AE3D; --run-soft:#3A2E12; --bad:#EE8577; --bad-soft:#3D1F1B; --good:#6BCB8F;
+  --new:#A89BF0; --new-soft:#27234A; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55}
+h1,h2,h3,h4{font-family:var(--f-display);line-height:1.2;text-wrap:balance;margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:1320px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding-block:12px}
+.brand{display:flex;align-items:baseline;gap:10px;margin-right:auto}
+.brand b{font-family:var(--f-display);font-size:21px;letter-spacing:-.01em}
+.brand b span{color:var(--accent)}
+.brand small{font-family:var(--f-mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+nav.tabs{display:flex;gap:4px;flex-wrap:wrap}
+nav.tabs button{border:0;background:none;padding:7px 12px;border-radius:7px;cursor:pointer;color:var(--muted);font-weight:500}
+nav.tabs button[aria-selected="true"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+main{padding-block:24px 64px}
+.view[hidden]{display:none!important}
+
+/* Run view */
+.run{display:grid;grid-template-columns:350px minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:960px){.run{grid-template-columns:minmax(0,1fr)}}
+.rail{display:flex;flex-direction:column;gap:16px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 78px);max-height:calc(100vh - 100px);overflow:auto;padding-bottom:8px}
+@media (max-width:960px){.rail{position:static;max-height:none}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.panel h3{font-size:15px;display:flex;align-items:center;gap:8px}
+.eyebrow{font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
+details.intake summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.intake summary::-webkit-details-marker{display:none}
+details.intake summary::after{content:"Edit";font-size:12px;color:var(--accent);font-weight:600}
+details.intake[open] summary::after{content:"Hide"}
+.form{display:grid;gap:10px;margin-top:12px}
+.form label{display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--muted)}
+.form input,.form textarea,.form select{border:1px solid var(--line);background:var(--bg);border-radius:7px;padding:8px 10px;font-size:14px;font-weight:400;color:var(--fg);width:100%}
+.form textarea{resize:vertical;min-height:58px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.brief-sum{font-size:13px;color:var(--muted);margin-top:6px}
+.brief-sum strong{color:var(--fg)}
+
+.stage{display:grid;gap:6px}
+.stage + .stage{margin-top:12px}
+.stage-h{display:flex;justify-content:space-between;align-items:baseline}
+.stage-h em{font-style:normal;font-size:11px;color:var(--muted)}
+.node{display:flex;align-items:center;gap:10px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);cursor:pointer;text-align:left;width:100%}
+.node:hover{border-color:var(--accent)}
+.node.sub{margin-left:18px;position:relative}
+.node.sub::before{content:"";position:absolute;left:-11px;top:-7px;bottom:50%;border-left:1px solid var(--line);border-bottom:1px solid var(--line);width:9px;border-bottom-left-radius:5px}
+.node .nm{font-weight:600;font-size:13.5px;line-height:1.25}
+.node .rl{font-size:11.5px;color:var(--muted);display:block;font-weight:400}
+.node .st{margin-left:auto;flex:none}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--line);flex:none}
+[data-s="running"] .dot{background:var(--run);box-shadow:0 0 0 4px var(--run-soft);animation:pulse 1.2s infinite}
+[data-s="done"] .dot{background:var(--good)}
+[data-s="error"] .dot,[data-s="blocked"] .dot{background:var(--bad)}
+[data-s="waiting"] .dot{background:transparent;border:2px solid var(--muted)}
+@keyframes pulse{50%{box-shadow:0 0 0 7px transparent}}
+@media (prefers-reduced-motion:reduce){[data-s="running"] .dot{animation:none}}
+.tag-new{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;background:var(--new-soft);color:var(--new);padding:2px 6px;border-radius:4px;flex:none}
+
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.sm{padding:4px 10px;font-size:12.5px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.toolbar .sp{flex:1}
+.note{font-size:13px;color:var(--muted)}
+
+.banner{border-radius:var(--r);padding:12px 16px;background:var(--run-soft);border:1px solid color-mix(in srgb,var(--run) 40%,transparent);font-size:14px;display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.banner.live{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
+.banner.err{background:var(--bad-soft);border-color:color-mix(in srgb,var(--bad) 35%,transparent)}
+.out{display:grid;gap:16px;min-width:0}
+.kit{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:grid;gap:14px}
+.kit h2{font-size:24px;letter-spacing:-.01em}
+.kit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.kpi{background:var(--bg);border-radius:8px;padding:12px;border:1px solid var(--line);min-width:0}
+.kpi .eyebrow{display:block;margin-bottom:4px}
+.kpi p{margin:0;font-size:14px}
+.progress{height:6px;background:var(--sunk);border-radius:99px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .4s}
+
+.agent{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;min-width:0;scroll-margin-top:90px}
+.agent > header{display:flex;gap:12px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.agent > header .idx{font-family:var(--f-mono);font-size:12px;color:var(--muted);flex:none}
+.agent > header h3{font-size:17px}
+.agent > header .who{min-width:0}
+.agent > header .who small{display:block;color:var(--muted);font-size:12.5px}
+.agent > header .acts{margin-left:auto;display:flex;gap:6px;align-items:center}
+.agent.sub{margin-left:28px}
+@media (max-width:600px){.agent.sub{margin-left:12px}}
+.pill{font-family:var(--f-mono);font-size:11px;padding:3px 8px;border-radius:99px;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.pill[data-s="running"]{background:var(--run-soft);color:var(--run)}
+.pill[data-s="done"]{background:var(--accent-soft);color:var(--accent)}
+.pill[data-s="error"],.pill[data-s="blocked"]{background:var(--bad-soft);color:var(--bad)}
+.agent .body{padding:16px;display:grid;gap:14px;min-width:0}
+.agent .body.empty{color:var(--muted);font-size:14px}
+.sec{display:grid;gap:6px;min-width:0}
+.sec > h4{font-size:12px;font-family:var(--f-mono);font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.sec p{margin:0;max-width:72ch}
+.sec ul{margin:0;padding-left:20px;display:grid;gap:3px;max-width:78ch}
+.lead{font-size:16px;font-weight:500}
+dl.kv{display:grid;grid-template-columns:minmax(110px,180px) minmax(0,1fr);gap:6px 16px;margin:0}
+dl.kv dt{font-size:13px;color:var(--muted);font-weight:600}
+dl.kv dd{margin:0}
+@media (max-width:520px){dl.kv{grid-template-columns:minmax(0,1fr)}dl.kv dd{margin-bottom:6px}}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--sunk);font-weight:600;font-size:12px;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td ul{padding-left:16px;margin:0}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.card{border:1px solid var(--line);border-radius:8px;padding:12px;background:var(--bg);display:grid;gap:8px;align-content:start;min-width:0}
+.card > .sec > h4{font-size:11px}
+.card .ttl{font-weight:600;font-family:var(--f-display);font-size:15px}
+.swot{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:600px){.swot{grid-template-columns:1fr}}
+.writing{font-family:var(--f-mono);font-size:12.5px;color:var(--run)}
+.urdu{font-family:"Noto Nastaliq Urdu","Jameel Noori Nastaleeq",serif;direction:rtl;text-align:right;line-height:2}
+
+/* Agents tab */
+.intro{max-width:760px;display:grid;gap:8px;margin-bottom:24px}
+.intro h1{font-size:clamp(26px,4vw,36px);letter-spacing:-.02em}
+.intro p{margin:0;color:var(--muted)}
+.specs{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,380px),1fr));gap:16px}
+.spec{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;gap:12px;align-content:start;min-width:0}
+.spec .hd{display:flex;gap:10px;align-items:flex-start}
+.spec .hd h3{font-size:18px}
+.spec .hd small{color:var(--muted);display:block;font-size:13px}
+.spec .hd .tag-new{margin-left:auto}
+.spec dl.kv{grid-template-columns:96px minmax(0,1fr);font-size:14px}
+.spec details summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--accent)}
+pre.prompt{white-space:pre-wrap;word-break:break-word;font-family:var(--f-mono);font-size:12px;background:var(--sunk);padding:12px;border-radius:8px;max-height:340px;overflow:auto;margin:8px 0 0}
+
+/* Architecture & roadmap */
+.doc{display:grid;gap:28px;max-width:1040px}
+.doc section{display:grid;gap:12px}
+.doc h2{font-size:22px}
+.doc p{margin:0;max-width:72ch}
+.flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;overflow-x:auto}
+@media (max-width:860px){.flow{grid-template-columns:minmax(0,1fr)}}
+.flow .col{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:grid;gap:8px;align-content:start;position:relative}
+.flow .col .eyebrow{color:var(--accent)}
+.flow .box{border:1px solid var(--line);border-radius:7px;padding:7px 9px;font-size:13px;font-weight:600;background:var(--bg)}
+.flow .box small{display:block;font-weight:400;color:var(--muted);font-size:11.5px}
+.flow .box.new{border-color:color-mix(in srgb,var(--new) 50%,transparent)}
+.cols2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.info{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:8px;align-content:start}
+.info h3{font-size:16px}
+.info ul{margin:0;padding-left:18px;display:grid;gap:4px;font-size:14px}
+code{font-family:var(--f-mono);font-size:12.5px;background:var(--sunk);padding:1px 5px;border-radius:4px}
+pre.schema{font-family:var(--f-mono);font-size:12.5px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;overflow-x:auto;margin:0;line-height:1.5}
+.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:14px;z-index:20}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><b>Grow<span>With</span>AI</b><small>Agent Studio · prototype</small></div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="run" aria-selected="true">Run</button>
+      <button role="tab" data-tab="agents" aria-selected="false">Agents</button>
+      <button role="tab" data-tab="arch" aria-selected="false">Architecture</button>
+      <button role="tab" data-tab="roadmap" aria-selected="false">Roadmap</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- RUN -->
+  <section class="view" id="view-run">
+    <div class="run">
+      <aside class="rail">
+        <div class="panel">
+          <details class="intake" id="intake">
+            <summary><span class="eyebrow">Client brief</span></summary>
+            <form class="form" id="briefForm" autocomplete="off">
+              <label for="f_name">Business name<input id="f_name" name="name" required></label>
+              <div class="row2">
+                <label for="f_industry">Industry<input id="f_industry" name="industry"></label>
+                <label for="f_city">City / market<input id="f_city" name="city"></label>
+              </div>
+              <label for="f_product">What they sell<textarea id="f_product" name="product"></textarea></label>
+              <label for="f_audience">Current customers / audience<textarea id="f_audience" name="audience"></textarea></label>
+              <label for="f_goal">Goal (measurable)<input id="f_goal" name="goal"></label>
+              <label for="f_challenge">Biggest challenge<textarea id="f_challenge" name="challenge"></textarea></label>
+              <div class="row2">
+                <label for="f_budget">Monthly budget (PKR)<input id="f_budget" name="budget"></label>
+                <label for="f_lang">Language<select id="f_lang" name="lang"><option>English + Roman Urdu</option><option>English only</option><option>Urdu + English</option><option>Roman Urdu only</option></select></label>
+              </div>
+              <label for="f_channels">Channels used today<input id="f_channels" name="channels"></label>
+            </form>
+            <div class="presets"><span class="note">Presets:</span>
+              <button class="chip" data-preset="academy">Tuition academy</button>
+              <button class="chip" data-preset="bakery">Home bakery</button>
+              <button class="chip" data-preset="saas">SaaS startup</button>
+            </div>
+          </details>
+          <div class="brief-sum" id="briefSum"></div>
+        </div>
+        <div class="panel">
+          <div class="stage-h" style="margin-bottom:10px"><span class="eyebrow">Pipeline</span><em class="note" id="pipeCount"></em></div>
+          <div id="pipeline"></div>
+        </div>
+      </aside>
+
+      <div class="out">
+        <div id="banner"></div>
+        <div class="toolbar">
+          <button class="btn primary" id="runBtn">Run all agents</button>
+          <button class="btn" id="stopBtn" hidden>Stop</button>
+          <span class="sp"></span>
+          <button class="btn sm" id="exportMd">Save growth kit (.md)</button>
+          <button class="btn sm" id="exportCsv">Save lead tracker (.csv)</button>
+          <button class="btn sm" id="copyMd">Copy kit</button>
+        </div>
+        <div class="progress" aria-hidden="true"><i id="prog"></i></div>
+        <div id="kit"></div>
+        <div id="outputs" class="out"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AGENTS -->
+  <section class="view" id="view-agents" hidden>
+    <div class="intro">
+      <span class="eyebrow">Team of 12 · 5 core + 3 recommended + 4 content sub-agents</span>
+      <h1>Who does what</h1>
+      <p>Your five core agents stay at the centre. I added an Orchestrator to plan and route work, a Quality Reviewer as the human-review gate your plan insists on, and an Analytics agent so every engagement ends with numbers you can track. The Content Creator leads four sub-agents.</p>
+    </div>
+    <div class="specs" id="specs"></div>
+  </section>
+
+  <!-- ARCHITECTURE -->
+  <section class="view" id="view-arch" hidden>
+    <div class="doc">
+      <div class="intro" style="margin:0">
+        <span class="eyebrow">How it fits together</span>
+        <h1>Architecture</h1>
+        <p>Agents never talk to each other directly. Each one reads the client brief plus the outputs it depends on from a shared growth file, writes its own section back, and the Orchestrator decides what runs next.</p>
+      </div>
+      <section>
+        <h2>Flow</h2>
+        <div class="flow" id="flow"></div>
+        <p class="note">Content and Sales run in parallel once the marketing strategy exists. Quality Reviewer reads everything before the client sees it.</p>
+      </section>
+      <section>
+        <h2>Shared state: the growth file</h2>
+        <p>One JSON document per client engagement. Every agent reads from it and writes only its own key. In the no-code build this is a Google Sheet row plus a Doc; in the code build it is a table in SQLite or Postgres.</p>
+<pre class="schema">{
+  "client_id": "brightpath-2026-10",
+  "brief":    { "name", "industry", "city", "product", "audience", "goal", "challenge", "budget", "lang", "channels" },
+  "status":   { "orchestrator": "done", "analyst": "running", ... },
+  "outputs":  { "orchestrator": {...}, "analyst": {...}, "research": {...}, ... },
+  "approvals":{ "marketing": { "by": "owner", "at": "2026-10-24T10:12" }, ... },
+  "qa":       { "score": "8/10", "must_fix": [...] },
+  "version":  3
+}</pre>
+      </section>
+      <section>
+        <h2>Design rules</h2>
+        <div class="cols2">
+          <div class="info"><h3>Orchestration</h3><ul>
+            <li>Each agent declares its dependencies; a runner starts any agent whose inputs are ready (max 3 at once).</li>
+            <li>Agents return strict JSON in a fixed shape, so outputs can be checked, rendered and exported.</li>
+            <li>If an agent fails, its dependents are blocked, not guessed. Re-run just that agent.</li>
+          </ul></div>
+          <div class="info"><h3>Human review gates</h3><ul>
+            <li>Gate 1, after the Orchestrator: confirm goal and answer its client questions.</li>
+            <li>Gate 2, after Marketing: approve positioning before content is written.</li>
+            <li>Gate 3, after Quality Reviewer: fix every must-fix item before delivery.</li>
+          </ul></div>
+          <div class="info"><h3>Honesty guardrails</h3><ul>
+            <li>No invented statistics, company names, people or phone numbers.</li>
+            <li>Market facts are labelled as hypotheses until interviews confirm them.</li>
+            <li>No guaranteed sales; targets are stated as targets.</li>
+          </ul></div>
+          <div class="info"><h3>Cost control</h3><ul>
+            <li>Cache identical runs; re-run single agents instead of the whole pipeline.</li>
+            <li>Use a smaller, cheaper model for sub-agents and the localizer once quality is proven.</li>
+            <li>Trim upstream context: each agent only gets the sections it depends on.</li>
+          </ul></div>
+          <div class="info"><h3>Data &amp; privacy</h3><ul>
+            <li>Collect only business information, not customer personal data, at intake.</li>
+            <li>Lead trackers hold public business info; never scrape private numbers.</li>
+            <li>API keys stay in environment variables, never in a public repo.</li>
+          </ul></div>
+        </div>
+      </section>
+      <section>
+        <h2>Build stack, in two stages</h2>
+        <div class="cols2">
+          <div class="info"><span class="eyebrow">Stage A · no-code · weeks 1–4</span><h3>Form → Sheet → n8n → LLM → Doc</h3><ul>
+            <li>Google Form collects the brief into a Sheet.</li>
+            <li>An n8n workflow triggers on the new row and calls each agent prompt in order through an LLM node.</li>
+            <li>Each JSON output is written to its own Sheet column; a final node fills a Google Doc template.</li>
+            <li>You review the Doc, fix QA items, then send it.</li>
+          </ul></div>
+          <div class="info"><span class="eyebrow">Stage B · code · months 3–6</span><h3>Python service with a DAG runner</h3><ul>
+            <li>FastAPI backend: <code>POST /runs</code>, <code>GET /runs/{id}</code>, <code>POST /runs/{id}/agents/{agent}/rerun</code>.</li>
+            <li>Agent registry: name, prompt template, output schema, dependencies (the same table as the Agents tab).</li>
+            <li>Validate every output against its schema (e.g. with Pydantic) and retry once on failure.</li>
+            <li>Simple web front end like this prototype; Postgres for growth files; optional framework such as LangGraph or CrewAI only if the plain runner gets painful.</li>
+          </ul></div>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ROADMAP -->
+  <section class="view" id="view-roadmap" hidden>
+    <div class="doc">
+      <div class="intro" style="margin:0">
+        <span class="eyebrow">Turning the prototype into a business</span>
+        <h1>Roadmap</h1>
+        <p>Use this prototype as the demo in your pitch and as the delivery engine for your first pilot clients. Sell the Growth Kit as a service first; productise only what clients keep asking for.</p>
+      </div>
+      <section>
+        <h2>Agents mapped to your packages</h2>
+        <div class="tbl"><table>
+          <thead><tr><th>Package (test price)</th><th>Agents used</th><th>Client receives</th></tr></thead>
+          <tbody>
+            <tr><td><b>Starter</b><br>PKR 5,000 / month</td><td>Orchestrator, Business Analyst, Market Researcher, Marketing, Content Creator + Social Writer, Visual Designer, QA</td><td>Customer profile, marketing plan, 30-day calendar, 6+ posts, Canva briefs</td></tr>
+            <tr><td><b>Growth</b><br>PKR 10,000 / month</td><td>Starter + Video Scripter, Localizer, Sales Lead, Analytics</td><td>Adds reel scripts, Roman Urdu copy, outreach sequence, lead tracker, weekly KPI report</td></tr>
+            <tr><td><b>Automation</b><br>PKR 15,000+ / month</td><td>Growth + n8n workflows</td><td>Inquiry form → sheet, auto-drafted replies, weekly report emailed automatically</td></tr>
+          </tbody>
+        </table></div>
+        <p class="note">Prices are the test prices from your plan, not market rates.</p>
+      </section>
+      <section>
+        <h2>Do you need more agents?</h2>
+        <p>Three additions are worth it now and are already in the prototype. Four more are worth adding only after clients ask for that work twice.</p>
+        <div class="cols2">
+          <div class="info"><span class="eyebrow">Added now</span><h3>Orchestrator</h3><p>Without it, each agent works from the raw brief and they contradict each other. It sets one objective and briefs everyone.</p></div>
+          <div class="info"><span class="eyebrow">Added now</span><h3>Quality Reviewer</h3><p>Your plan's core promise is human-reviewed output. This agent prepares that review: it flags invented facts, guarantees, inconsistencies and privacy risks.</p></div>
+          <div class="info"><span class="eyebrow">Added now</span><h3>Analytics &amp; Reporting</h3><p>Turns the plan into KPIs, a tracking sheet and a weekly action plan, which is what justifies a monthly retainer.</p></div>
+          <div class="info"><span class="eyebrow">Add later</span><h3>Ads Manager</h3><p>Meta/Google ad setup, audiences and budget pacing. Add when clients have ad budgets above roughly PKR 20k.</p></div>
+          <div class="info"><span class="eyebrow">Add later</span><h3>Local SEO / Google Business Profile</h3><p>Profile optimisation, review replies, local keywords. Strong for shops, clinics and academies.</p></div>
+          <div class="info"><span class="eyebrow">Add later</span><h3>Inquiry Responder</h3><p>Drafts WhatsApp/Instagram DM replies from an FAQ sheet. Human approves before sending.</p></div>
+          <div class="info"><span class="eyebrow">Add later</span><h3>Account Manager</h3><p>Client onboarding, monthly summary email, renewal reminders. Needed once you have 5+ clients.</p></div>
+        </div>
+      </section>
+      <section>
+        <h2>Next 21 days with this prototype</h2>
+        <div class="tbl"><table>
+          <thead><tr><th>Days</th><th>Do</th><th>Done when</th></tr></thead>
+          <tbody>
+            <tr><td>1–3</td><td>Pick one segment (academies or home food businesses are easiest to reach in Karachi). Run the prototype on 3 real local businesses using public info.</td><td>3 sample growth kits saved</td></tr>
+            <tr><td>4–7</td><td>Interview 10 owners. Show a sample kit at the end of each interview. Use the Market Researcher's interview questions.</td><td>Notes with repeated pain points</td></tr>
+            <tr><td>8–12</td><td>Tighten the prompts for the agents owners found weakest. Add the client's real answers to the brief form.</td><td>Owners rate the kit useful (4/5+)</td></tr>
+            <tr><td>13–17</td><td>Rebuild the pipeline in n8n (Stage A) so it runs without this page. Keep the same prompts and JSON shapes.</td><td>Form submission produces a Doc</td></tr>
+            <tr><td>18–21</td><td>Offer a paid pilot. Pitch with: problem, interview evidence, live demo of this studio, pricing, roadmap.</td><td>1 paid pilot or clear reasons for rejection</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+document.addEventListener("DOMContentLoaded",function(){
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const label = k => String(k).replace(/_/g," ").replace(/\bpkr\b/i,"(PKR)").replace(/^./,c=>c.toUpperCase());
+
+/* ---------------- Agent registry ---------------- */
+const AGENTS = [
+ {id:"orch", n:"Orchestrator", role:"Project manager", stage:1, isNew:true, deps:[],
+  mission:"Turns the brief into one measurable objective, lists assumptions and missing info, and briefs every other agent.",
+  tools:"LLM, Google Sheets (growth file)", gate:"Owner confirms the objective and answers client questions.", kpi:"Objective is measurable; no agent works outside its brief.",
+  task:"Plan the engagement. Restate the goal as ONE measurable objective with a deadline, set 3-4 success metrics, list assumptions, list information still missing from the client, and write a one-line focus brief for each agent: Business Analyst, Target Market Researcher, Marketing Agent, Content Creator, Sales Lead, Quality Reviewer, Analytics.",
+  shape:{objective:"",success_metrics:[{metric:"",target:"",timeframe:""}],assumptions:[""],questions_for_client:[""],agent_briefs:[{agent:"",focus:""}],risks_to_watch:[""]}},
+ {id:"analyst", n:"Business Analyst", role:"Diagnosis", stage:2, deps:["orch"],
+  mission:"Understands how the business makes money, what is working and what is broken, before anyone writes marketing.",
+  tools:"LLM, public info (website, social pages, Google profile)", gate:"Owner corrects any wrong assumption about the business.", kpi:"Core problems are specific and ranked by impact.",
+  task:"Diagnose the business: summary, value proposition, SWOT, revenue model with pricing notes and unit economics to check, 3-5 core problems ranked by impact (each marked as evidence or assumption), 3-5 quick wins that cost little, and one recommended focus.",
+  shape:{business_summary:"",value_proposition:"",swot:{strengths:[""],weaknesses:[""],opportunities:[""],threats:[""]},revenue_model:{how_it_earns:"",pricing_notes:"",unit_economics_to_check:[""]},core_problems:[{problem:"",evidence_or_assumption:"",impact:"High|Medium|Low"}],quick_wins:[""],recommended_focus:""}},
+ {id:"research", n:"Target Market Researcher", role:"Customers & competitors", stage:2, deps:["orch","analyst"],
+  mission:"Defines exactly who to sell to, what they worry about, where they spend time, and how competitors win.",
+  tools:"LLM, Google Forms (interviews), public competitor pages", gate:"Hypotheses get tested in 5-10 customer interviews.", kpi:"Every insight is labelled fact or hypothesis.",
+  task:"Define the ideal customer profile, 2-3 personas (use descriptive labels like 'Busy working parent', never real names), rank segments, describe competitor TYPES (not real company names) and the gap to exploit, list hypotheses to validate, and write 6-8 customer interview questions about real past behaviour.",
+  shape:{ideal_customer_profile:{who:"",where:"",budget_or_spend:"",decision_maker:"",buying_triggers:[""]},personas:[{name:"",description:"",goals:[""],pain_points:[""],objections:[""],where_they_spend_time:[""]}],segments_ranked:[{segment:"",why:"",priority:"1|2|3"}],competitor_landscape:[{competitor_type:"",how_they_win:"",gap_to_exploit:""}],hypotheses_to_validate:[""],interview_questions:[""]}},
+ {id:"marketing", n:"Marketing Agent", role:"Strategy & campaign", stage:3, deps:["analyst","research"],
+  mission:"Chooses the positioning, channels, offer and a 30-day campaign that fits the budget.",
+  tools:"LLM, Google Sheets (budget), Meta Business Suite later", gate:"Owner approves positioning and offer before content is written.", kpi:"Budget split adds up; every channel has a KPI.",
+  task:"Write the positioning statement, 3-5 key messages, a channel plan within the stated monthly budget (PKR), one campaign (name, big idea, offer, duration), a 4-week calendar, a budget split that adds up to the budget, and 4-5 KPIs with targets.",
+  shape:{positioning_statement:"",key_messages:[""],channel_plan:[{channel:"",why:"",cadence:"",monthly_budget_pkr:"",kpi:""}],campaign:{name:"",big_idea:"",offer:"",duration:""},thirty_day_calendar:[{week:"Week 1",theme:"",actions:[""]}],budget_split:[{item:"",pkr:""}],kpis:[{kpi:"",target:""}]}},
+ {id:"content", n:"Content Creator", role:"Content lead", stage:4, deps:["research","marketing"],
+  mission:"Sets content pillars and brand voice, then briefs four sub-agents.",
+  tools:"LLM, Canva, Meta Business Suite scheduler", gate:"Owner approves voice rules once; reused every month.", kpi:"Every piece maps to a pillar and a campaign message.",
+  task:"Define 3-4 content pillars with example topics, brand voice rules, a specific brief for each sub-agent (social_writer, visual_designer, video_scripter, localizer), and publishing rules.",
+  shape:{content_pillars:[{pillar:"",purpose:"",example_topics:[""]}],brand_voice:{tone:"",do:[""],dont:[""]},briefs:{social_writer:"",visual_designer:"",video_scripter:"",localizer:""},publishing_rules:[""]}},
+ {id:"social", n:"Social Post Writer", role:"Sub-agent · captions", stage:4, sub:true, deps:["content","marketing"],
+  mission:"Writes ready-to-post captions with hooks, hashtags and CTAs.",
+  tools:"LLM, Meta Business Suite", gate:"Owner approves before scheduling.", kpi:"Saves, shares and DMs per post.",
+  task:"Write 6 ready-to-post social posts following the content brief and campaign. Mix pillars and platforms. Keep captions under 120 words.",
+  shape:{posts:[{platform:"",pillar:"",hook:"",caption:"",hashtags:[""],cta:"",visual_note:""}]}},
+ {id:"visual", n:"Visual Designer", role:"Sub-agent · Canva briefs", stage:4, sub:true, deps:["content"],
+  mission:"Produces step-by-step Canva briefs so anyone can make on-brand graphics.",
+  tools:"Canva (free)", gate:"Owner checks brand colours and logo use.", kpi:"Design made in under 20 minutes from the brief.",
+  task:"Write 3 Canva design briefs (e.g. feed post, story, flyer) with exact sizes in pixels, layout, the text on the design, colours and fonts, and 4-6 Canva steps each.",
+  shape:{designs:[{title:"",format:"",size_px:"",layout:"",text_on_design:"",colors_and_fonts:"",canva_steps:[""]}]}},
+ {id:"video", n:"Short-Video Scripter", role:"Sub-agent · reels", stage:4, sub:true, deps:["content","research"],
+  mission:"Writes 15-45 second reel/TikTok scripts that can be shot on a phone.",
+  tools:"Phone camera, CapCut / Instagram editor", gate:"Owner confirms anyone filmed has agreed.", kpi:"3-second hold rate and completion rate.",
+  task:"Write 2 short-video scripts (15-45 seconds) shootable on a phone with no budget. Give a hook for the first 3 seconds and a scene-by-scene breakdown.",
+  shape:{scripts:[{title:"",platform:"",length_seconds:"",hook_first_3s:"",scenes:[{time:"",visual:"",voiceover:"",on_screen_text:""}],cta:""}]}},
+ {id:"local", n:"Urdu / Roman Urdu Localizer", role:"Sub-agent · language", stage:4, sub:true, isNew:true, deps:["content","marketing"],
+  mission:"Adapts key messages for Pakistani audiences who read Roman Urdu or Urdu, not word-for-word translation.",
+  tools:"LLM, native-speaker check", gate:"A native speaker reads every line before use.", kpi:"Engagement of Roman Urdu vs English posts.",
+  task:"Localize 5 lines (the key messages and campaign CTAs) into natural Roman Urdu and Urdu script as a Karachi customer would actually say them. Add a short note on tone for each.",
+  shape:{language_notes:"",localized:[{original:"",roman_urdu:"",urdu:"",note:""}]}},
+ {id:"sales", n:"Sales Lead", role:"Leads & outreach", stage:4, deps:["research","marketing"],
+  mission:"Finds and qualifies leads, writes the outreach and follow-up sequence, and sets up the lead tracker.",
+  tools:"Google Sheets (CRM), WhatsApp Business, LinkedIn, email", gate:"Owner sends messages personally; nothing is sent automatically.", kpi:"Reply rate, qualified leads, meetings or visits booked.",
+  task:"Write lead qualification criteria, lead sources and how to use each, 4-6 prospect ARCHETYPES (types of buyer, never real names or numbers), a 4-step outreach/follow-up sequence with full message text, objection handling, lead tracker column names, and follow-up rules. Messages must be personal and non-spammy.",
+  shape:{qualification_criteria:[{criterion:"",what_good_looks_like:""}],lead_sources:[{source:"",how_to_use:"",expected_quality:""}],prospect_archetypes:[{archetype:"",signals:"",first_message_angle:""}],outreach_sequence:[{step:"",day:"",channel:"",message:""}],objection_handling:[{objection:"",response:""}],lead_tracker_columns:[""],follow_up_rules:[""]}},
+ {id:"qa", n:"Quality Reviewer", role:"Human-review gate", stage:5, isNew:true, deps:["orch","analyst","research","marketing","content","social","visual","video","local","sales"],
+  mission:"Checks every output for invented facts, guarantees, contradictions, tone and privacy before the client sees it.",
+  tools:"LLM + your own judgement", gate:"You fix every must-fix item, then approve.", kpi:"Zero client-reported factual errors.",
+  task:"Review all upstream outputs as a strict editor. Score the kit out of 10, give a verdict, list must-fix issues with the agent name and the fix, list claims the owner must verify, run consistency checks (budget adds up, messages match positioning, CTAs consistent, language matches brief), list privacy/compliance notes, and list what is approved as-is.",
+  shape:{overall_score:"x/10",verdict:"Ready|Needs fixes",must_fix:[{agent:"",issue:"",fix:""}],claims_to_verify:[""],consistency_checks:[{check:"",result:"Pass|Flag",note:""}],privacy_and_compliance:[""],approved_for_client:[""]}},
+ {id:"analytics", n:"Analytics & Reporting", role:"KPIs & action plan", stage:5, isNew:true, deps:["orch","marketing","sales"],
+  mission:"Defines what to measure, how to track it in a free sheet, and the week-by-week action plan.",
+  tools:"Google Sheets, Meta Insights, Google Forms", gate:"Owner agrees who updates the sheet and when.", kpi:"Report delivered every week on time.",
+  task:"Define one north-star metric, a KPI dashboard (definition, data source, target, review cadence), tracking setup steps using free tools, a weekly report template, a 4-week action plan with owner and done-when, and decision rules (what to change if a KPI is off).",
+  shape:{north_star_metric:"",kpi_dashboard:[{kpi:"",definition:"",source:"",target:"",review:"Weekly|Monthly"}],tracking_setup:[""],weekly_report_template:[""],action_plan:[{week:"",tasks:[""],owner:"",done_when:""}],decision_rules:[""]}}
+];
+const BY = Object.fromEntries(AGENTS.map(a=>[a.id,a]));
+const STAGES = [[1,"Plan"],[2,"Understand"],[3,"Strategy"],[4,"Create & sell"],[5,"Review & measure"]];
+
+/* ---------------- Brief ---------------- */
+const PRESETS = {
+ academy:{name:"Brightpath Academy",industry:"Education — O/A Level tuition",city:"Gulshan-e-Iqbal, Karachi",product:"Small-batch O and A Level tuition (Maths, Physics, Chemistry, English), weekday evening and weekend batches, monthly mock exams. Fee PKR 9,000–14,000 per subject per month.",audience:"Around 60 students, mostly from nearby schools; parents decide and pay. Capacity is 120.",goal:"40 new admission inquiries and 15 enrolments for the January batch",challenge:"Relies on word of mouth. Facebook page posts irregularly, WhatsApp inquiries get slow replies, no way to track where inquiries come from.",budget:"25,000",lang:"English + Roman Urdu",channels:"Facebook page, WhatsApp, banner outside the centre"},
+ bakery:{name:"Crumb & Co.",industry:"Food — home bakery",city:"DHA & Clifton, Karachi",product:"Custom celebration cakes, brownies and dessert boxes made to order from a home kitchen. Cakes PKR 4,500–12,000.",audience:"Women 25–40 ordering for birthdays and office events; mostly repeat customers and friends of friends.",goal:"Double monthly orders from 30 to 60 within 3 months",challenge:"Instagram reach has dropped, orders bunch up around weekends, too many DMs asking prices that never convert.",budget:"15,000",lang:"English + Roman Urdu",channels:"Instagram, WhatsApp"},
+ saas:{name:"LedgerLite",industry:"B2B SaaS — invoicing for small businesses",city:"Pakistan (online), founders in Lahore",product:"Simple invoicing and payment-reminder app with WhatsApp reminders and FBR-friendly invoice formats. PKR 2,500/month per business.",audience:"40 beta users, mostly freelancers and small agencies.",goal:"25 paying customers in 90 days",challenge:"Founders are developers; no clear message, no sales process, beta users don't convert to paid.",budget:"40,000",lang:"English only",channels:"LinkedIn, founder's personal network"}
+};
+const FIELDS = ["name","industry","city","product","audience","goal","challenge","budget","lang","channels"];
+function getBrief(){const f=$("#briefForm");const o={};FIELDS.forEach(k=>o[k]=(f.elements[k].value||"").trim());return o}
+function setBrief(b){const f=$("#briefForm");FIELDS.forEach(k=>{if(b[k]!=null)f.elements[k].value=b[k]});renderBriefSum()}
+function briefText(b){return [["Business",b.name],["Industry",b.industry],["City / market",b.city],["What they sell",b.product],["Current customers",b.audience],["Goal",b.goal],["Biggest challenge",b.challenge],["Monthly marketing budget (PKR)",b.budget],["Language for content",b.lang],["Channels used today",b.channels]].filter(r=>r[1]).map(r=>r[0]+": "+r[1]).join("\n")}
+function renderBriefSum(){const b=getBrief();$("#briefSum").innerHTML=`<strong>${esc(b.name||"Unnamed business")}</strong> · ${esc(b.industry)}<br>Goal: ${esc(b.goal||"—")} · Budget PKR ${esc(b.budget||"—")}`}
+
+/* ---------------- Prompting ---------------- */
+function upstreamText(a, limit){
+  if(!a.deps.length) return "(none — you are first)";
+  const per = Math.floor(limit / a.deps.length);
+  return a.deps.map(d=>{let s=JSON.stringify(state.results[d]??"(missing)");if(s.length>per)s=s.slice(0,per)+" …(trimmed)";return `## ${BY[d].n}\n${s}`}).join("\n\n");
+}
+function buildPrompt(a, brief, upstream){
+  return `You are the ${a.n} agent (${a.role}) in GrowWithAI, a multi-agent growth service for small businesses and early-stage startups. Default market: Pakistan; money in PKR.
+
+Your mission: ${a.mission}
+
+RULES
+- Be specific to THIS business; no generic advice.
+- Never invent statistics, real company names, real people, phone numbers or reviews. If a number is an estimate, say so.
+- Label uncertain market statements as assumptions or hypotheses to validate.
+- Never promise guaranteed sales or results; state targets as targets.
+- Content language preference from the brief applies to customer-facing copy.
+- Reply with ONLY one JSON object in exactly this shape (same keys; fill every field; arrays may hold more items; keep each string concise):
+${JSON.stringify(a.shape)}
+
+BUSINESS BRIEF
+${brief}
+
+UPSTREAM AGENT OUTPUTS (JSON)
+${upstream}
+
+YOUR TASK
+${a.task}`;
+}
+
+/* ---------------- State ---------------- */
+const state = {results:{}, status:{}, chars:{}, errors:{}, demo:true, running:false, brief:null};
+let sampleFn = null, downloadsNs = null, ctls = new Set(), active = 0;
+const CONC = 3;
+
+/* ---------------- Rendering helpers ---------------- */
+function isPrim(v){return v==null||typeof v!=="object"}
+function renderVal(v, key){
+  if(isPrim(v)) return `<p${key==="urdu"?' class="urdu"':""}>${esc(v)}</p>`;
+  if(Array.isArray(v)){
+    if(!v.length) return `<p class="note">—</p>`;
+    if(v.every(isPrim)) return `<ul>${v.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`;
+    const objs=v.filter(x=>x&&typeof x==="object"&&!Array.isArray(x));
+    const keys=[...new Set(objs.flatMap(Object.keys))];
+    const flat=objs.every(o=>Object.values(o).every(x=>isPrim(x)||(Array.isArray(x)&&x.every(isPrim))));
+    const long=objs.some(o=>Object.values(o).some(x=>typeof x==="string"&&x.length>160));
+    if(flat && keys.length<=5 && !long){
+      return `<div class="tbl"><table><thead><tr>${keys.map(k=>`<th>${esc(label(k))}</th>`).join("")}</tr></thead><tbody>${objs.map(o=>`<tr>${keys.map(k=>`<td>${cell(o[k])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+    }
+    return `<div class="cards">${objs.map(o=>card(o)).join("")}</div>`;
+  }
+  return renderObj(v);
+}
+function cell(x){if(Array.isArray(x))return `<ul>${x.map(i=>`<li>${esc(i)}</li>`).join("")}</ul>`;return esc(x??"")}
+function card(o){
+  const ks=Object.keys(o);const tk=ks.find(k=>typeof o[k]==="string"&&o[k].length<80);
+  let h=`<div class="card">${tk?`<div class="ttl">${esc(o[tk])}</div>`:""}`;
+  const prims=ks.filter(k=>k!==tk&&isPrim(o[k]));
+  if(prims.length) h+=`<dl class="kv">${prims.map(k=>`<dt>${esc(label(k))}</dt><dd${k==="urdu"?' class="urdu"':""}>${esc(o[k])}</dd>`).join("")}</dl>`;
+  ks.filter(k=>k!==tk&&!isPrim(o[k])).forEach(k=>h+=`<div class="sec"><h4>${esc(label(k))}</h4>${renderVal(o[k],k)}</div>`);
+  return h+`</div>`;
+}
+function renderObj(o){
+  const ks=Object.keys(o);
+  const prims=ks.filter(k=>isPrim(o[k])), rest=ks.filter(k=>!isPrim(o[k]));
+  let h="";
+  if(prims.length) h+=`<dl class="kv">${prims.map(k=>`<dt>${esc(label(k))}</dt><dd>${esc(o[k])}</dd>`).join("")}</dl>`;
+  rest.forEach(k=>h+=`<div class="sec"><h4>${esc(label(k))}</h4>${renderVal(o[k],k)}</div>`);
+  return h;
+}
+function renderAgentBody(a,r){
+  if(a.id==="analyst" && r.swot){
+    const {swot,...rest}=r;
+    const sw=`<div class="sec"><h4>SWOT</h4><div class="swot">${["strengths","weaknesses","opportunities","threats"].map(k=>`<div class="card"><div class="ttl">${label(k)}</div>${renderVal(swot[k]||[])}</div>`).join("")}</div></div>`;
+    return topLevel({business_summary:rest.business_summary,value_proposition:rest.value_proposition})+sw+topLevel(Object.fromEntries(Object.entries(rest).filter(([k])=>!["business_summary","value_proposition"].includes(k))));
+  }
+  return topLevel(r);
+}
+function topLevel(o){return Object.entries(o).filter(([,v])=>v!==undefined).map(([k,v])=>`<div class="sec"><h4>${esc(label(k))}</h4>${isPrim(v)?`<p class="${typeof v==="string"&&v.length<260?"lead":""}">${esc(v)}</p>`:renderVal(v,k)}</div>`).join("")}
+
+const STATUS_TXT={idle:"not run",waiting:"queued",running:"working",done:"done",error:"failed",blocked:"blocked",cancelled:"stopped"};
+function renderPipeline(){
+  let h="";
+  for(const [s,nm] of STAGES){
+    const list=AGENTS.filter(a=>a.stage===s);
+    h+=`<div class="stage"><div class="stage-h"><span class="eyebrow">${s} · ${nm}</span>${s===4?'<em>parallel</em>':""}</div>`;
+    for(const a of list){const st=state.status[a.id]||"idle";
+      h+=`<button class="node${a.sub?" sub":""}" data-s="${st}" data-go="${a.id}"><span class="dot"></span><span><span class="nm">${esc(a.n)}</span><span class="rl">${esc(a.role)}</span></span>${a.isNew?'<span class="tag-new">added</span>':""}</button>`}
+    h+=`</div>`;
+  }
+  $("#pipeline").innerHTML=h;
+  const done=AGENTS.filter(a=>state.status[a.id]==="done").length;
+  $("#pipeCount").textContent=`${done}/${AGENTS.length} done`;
+  $("#prog").style.width=(done/AGENTS.length*100)+"%";
+}
+function agentCard(a,i){
+  const st=state.status[a.id]||"idle", r=state.results[a.id];
+  let body;
+  if(st==="running") body=`<div class="body empty"><span class="writing">${state.chars[a.id]?`Writing… ${(state.chars[a.id]/1000).toFixed(1)}k characters`:"Thinking…"}</span></div>`;
+  else if(st==="error") body=`<div class="body empty" style="color:var(--bad)">${esc(state.errors[a.id]||"This agent failed.")} Use Re-run to try again.</div>`;
+  else if(st==="blocked") body=`<div class="body empty">Waiting on an agent that failed or was stopped.</div>`;
+  else if(r) body=`<div class="body">${renderAgentBody(a,r)}</div>`;
+  else body=`<div class="body empty">${st==="waiting"?"Queued — starts when its inputs are ready: "+a.deps.map(d=>BY[d].n).join(", ")+".":"Not run yet."}</div>`;
+  const canRe=sampleFn&&!state.running&&(a.deps.every(d=>state.results[d]));
+  return `<article class="agent${a.sub?" sub":""}" id="out-${a.id}"><header><span class="idx">${String(i+1).padStart(2,"0")}</span><div class="who"><h3>${esc(a.n)}</h3><small>${esc(a.role)} · ${esc(a.mission)}</small></div><div class="acts">${a.isNew?'<span class="tag-new">added</span>':""}<span class="pill" data-s="${st}">${STATUS_TXT[st]}</span>${canRe?`<button class="btn sm" data-rerun="${a.id}">Re-run</button>`:""}</div></header>${body}</article>`;
+}
+function renderOutputs(){ $("#outputs").innerHTML=AGENTS.map(agentCard).join(""); renderKit(); renderPipeline(); }
+function renderOne(id){const el=document.getElementById("out-"+id);if(el){const i=AGENTS.findIndex(a=>a.id===id);el.outerHTML=agentCard(BY[id],i)}renderKit();renderPipeline()}
+function renderKit(){
+  const R=state.results, b=state.brief||getBrief();
+  if(!Object.keys(R).length){$("#kit").innerHTML="";return}
+  const box=(t,v)=>`<div class="kpi"><span class="eyebrow">${t}</span><p>${esc(v||"—")}</p></div>`;
+  const mf=R.qa?.must_fix?.length;
+  $("#kit").innerHTML=`<div class="kit"><div><span class="eyebrow">Growth kit · ${esc(b.name)}</span><h2>${esc(R.orch?.objective||b.goal)}</h2></div>
+  <div class="kit-grid">${box("Positioning",R.marketing?.positioning_statement)}${box("Campaign",R.marketing?.campaign?[R.marketing.campaign.name,R.marketing.campaign.offer].filter(Boolean).join(" — "):"")}${box("North-star metric",R.analytics?.north_star_metric)}${box("Quality review",R.qa?`${R.qa.overall_score} · ${R.qa.verdict}${mf?` · ${mf} must-fix`:""}`:"")}</div></div>`;
+}
+function banner(){
+  let h="";
+  if(state.running) h=`<div class="banner live"><b>Agents are working.</b> Each one starts as soon as its inputs are ready; Content and Sales run in parallel. A full run takes a few minutes.</div>`;
+  else if(state.demo) h=`<div class="banner"><div><b>Example run for Brightpath Academy, a fictional tuition centre.</b> Every agent below shows sample output so you can see the full kit. Edit the client brief on the left and press Run all agents to generate a real kit with Claude.${sampleFn?"":" Live runs work when this page is opened inside Claude."}</div></div>`;
+  else if(Object.values(state.status).some(s=>s==="error"||s==="blocked"||s==="cancelled")) h=`<div class="banner err">Some agents did not finish. Re-run the failed agent, then its dependents.</div>`;
+  $("#banner").innerHTML=h;
+  $("#runBtn").disabled=state.running||!sampleFn; $("#stopBtn").hidden=!state.running;
+}
+
+/* ---------------- Execution ---------------- */
+const ERR={not_granted:"Claude access wasn't allowed for this page.",sampling_disabled:"Claude isn't available on this account.",rate_limited:"Usage limit reached. Wait a little, then re-run.",invalid_json:"The reply wasn't valid JSON.",refused:"Claude declined this input. Adjust the brief.",prompt_too_large:"Too much context for this agent.",session_expired:"Your session expired. Sign in again.",upstream_error:"Connection problem."};
+async function callAgent(a, fresh){
+  const ctl=new AbortController(); ctls.add(ctl);
+  const prompt=buildPrompt(a, briefText(state.brief), upstreamText(a, a.id==="qa"?30000:14000));
+  try{
+    const opts={signal:ctl.signal,onText:({text})=>{state.chars[a.id]=text.length;const el=document.querySelector(`#out-${a.id} .writing`);if(el)el.textContent=`Writing… ${(text.length/1000).toFixed(1)}k characters`}};
+    if(fresh) opts.cache=false;
+    const r=await sampleFn.json(prompt,opts);
+    if(!r||typeof r!=="object"||Array.isArray(r)) throw {code:"invalid_json"};
+    return r;
+  } finally { ctls.delete(ctl) }
+}
+function schedule(){
+  for(const a of AGENTS){
+    if(state.status[a.id]==="waiting" && a.deps.some(d=>["error","blocked","cancelled"].includes(state.status[d]))){state.status[a.id]="blocked";renderOne(a.id)}
+  }
+  for(const a of AGENTS){
+    if(active>=CONC) break;
+    if(state.status[a.id]==="waiting" && a.deps.every(d=>state.status[d]==="done")) start(a,false);
+  }
+  if(active===0 && state.running){state.running=false;banner();renderOutputs();save();
+    const ok=AGENTS.every(a=>state.status[a.id]==="done"); toast(ok?"Growth kit ready":"Run finished with issues");}
+}
+function start(a,fresh){
+  active++; state.status[a.id]="running"; state.chars[a.id]=0; renderOne(a.id);
+  callAgent(a,fresh).then(r=>{state.results[a.id]=r;state.status[a.id]="done"})
+  .catch(e=>{state.status[a.id]=e&&e.code==="cancelled"?"cancelled":"error";state.errors[a.id]=ERR[e?.code]||"Something went wrong.";
+    if(e&&["not_granted","sampling_disabled"].includes(e.code)){stopAll()}})
+  .finally(()=>{active--;renderOne(a.id);if(state.running)schedule();else save()});
+}
+function runAll(){
+  if(!sampleFn||state.running) return;
+  const b=getBrief(); if(!b.name){toast("Add a business name first");$("#intake").open=true;return}
+  state.brief=b; state.demo=false; state.results={}; state.errors={}; state.chars={};
+  AGENTS.forEach(a=>state.status[a.id]="waiting"); state.running=true;
+  $("#intake").open=false; banner(); renderOutputs(); schedule();
+}
+function stopAll(){ctls.forEach(c=>c.abort()); AGENTS.forEach(a=>{if(state.status[a.id]==="waiting")state.status[a.id]="cancelled"}); }
+async function rerun(id){
+  const a=BY[id]; if(!sampleFn||state.running) return;
+  state.brief=state.brief||getBrief(); state.demo=false; banner();
+  active++; state.status[id]="running"; state.chars[id]=0; renderOne(id);
+  try{state.results[id]=await callAgent(a,true);state.status[id]="done";toast(a.n+" updated")}
+  catch(e){state.status[id]=e?.code==="cancelled"?"cancelled":"error";state.errors[id]=ERR[e?.code]||"Something went wrong."}
+  finally{active--;renderOutputs();banner();save()}
+}
+
+/* ---------------- Export ---------------- */
+function toMd(v,lvl){
+  if(isPrim(v)) return String(v??"")+"\n";
+  if(Array.isArray(v)) return v.map(x=>isPrim(x)?`- ${x}\n`:"- "+Object.entries(x).map(([k,y])=>`**${label(k)}:** ${Array.isArray(y)?(y.every(isPrim)?y.join("; "):y.map(z=>isPrim(z)?z:Object.values(z).join(" | ")).join(" / ")):(isPrim(y)?y:JSON.stringify(y))}`).join("  \n  ")+"\n").join("");
+  return Object.entries(v).map(([k,y])=>`${"#".repeat(Math.min(lvl,6))} ${label(k)}\n\n${toMd(y,lvl+1)}`).join("\n");
+}
+function kitMd(){
+  const b=state.brief||getBrief();
+  let md=`# Growth Kit — ${b.name}\n\nPrepared by GrowWithAI · ${new Date().toISOString().slice(0,10)}\n\n## Client brief\n\n${briefText(b).split("\n").map(l=>"- "+l).join("\n")}\n\n`;
+  AGENTS.forEach(a=>{if(state.results[a.id]) md+=`---\n\n## ${a.n} (${a.role})\n\n${toMd(state.results[a.id],3)}\n`});
+  md+=`\n---\n_Targets are not guarantees. Assumptions are marked and should be validated with customers before spending money._\n`;
+  return md;
+}
+function trackerCsv(){
+  const s=state.results.sales||{};
+  const cols=(s.lead_tracker_columns&&s.lead_tracker_columns.length)?s.lead_tracker_columns:["Lead name","Type","Source","Contact channel","First contact date","Status","Next follow-up","Notes"];
+  const q=x=>`"${String(x??"").replace(/"/g,'""')}"`;
+  const rows=[cols.map(q).join(",")];
+  (s.prospect_archetypes||[]).forEach(p=>{const r=cols.map((c,i)=>i===0?"(example) "+p.archetype:/note/i.test(c)?p.first_message_angle:/status/i.test(c)?"Not contacted":/type|segment|archetype/i.test(c)?p.archetype:"");rows.push(r.map(q).join(","))});
+  return rows.join("\n");
+}
+async function saveFile(filename,data){
+  if(!downloadsNs){toast("Saving files works when this page is open in Claude");return}
+  try{await downloadsNs.save({filename,data});}catch(e){if(e?.code!=="declined")toast("Couldn't save the file")}
+}
+function slug(){return (state.brief||getBrief()).name.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"client"}
+
+/* ---------------- Agents & architecture views ---------------- */
+function renderSpecs(){
+  const outKeys=a=>Object.keys(a.shape).map(label).join(", ");
+  $("#specs").innerHTML=AGENTS.map(a=>`<article class="spec"><div class="hd"><div><span class="eyebrow">Stage ${a.stage} · ${STAGES[a.stage-1][1]}</span><h3>${esc(a.n)}</h3><small>${esc(a.role)}</small></div>${a.isNew?'<span class="tag-new">recommended</span>':""}</div>
+  <p style="margin:0">${esc(a.mission)}</p>
+  <dl class="kv"><dt>Reads</dt><dd>Client brief${a.deps.length?" + "+a.deps.map(d=>BY[d].n).join(", "):""}</dd><dt>Produces</dt><dd>${esc(outKeys(a))}</dd><dt>Tools</dt><dd>${esc(a.tools)}</dd><dt>Human check</dt><dd>${esc(a.gate)}</dd><dt>Measured by</dt><dd>${esc(a.kpi)}</dd></dl>
+  <details><summary>Show full prompt</summary><pre class="prompt">${esc(buildPrompt(a,"{client brief}","{outputs of: "+(a.deps.map(d=>BY[d].n).join(", ")||"none")+"}"))}</pre></details></article>`).join("");
+  $("#flow").innerHTML=STAGES.map(([s,nm])=>`<div class="col"><span class="eyebrow">${s} · ${nm}</span>${AGENTS.filter(a=>a.stage===s).map(a=>`<div class="box${a.isNew?" new":""}"${a.sub?' style="margin-left:12px"':""}>${esc(a.n)}<small>${a.deps.length?"← "+a.deps.filter(d=>BY[d].stage!==s||true).map(d=>BY[d].n.split(" ")[0]).slice(0,4).join(", ")+(a.deps.length>4?" + more":""):"← client brief"}</small></div>`).join("")}</div>`).join("");
+}
+
+/* ---------------- Misc ---------------- */
+let tt; function toast(m){const t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2600)}
+function save(){try{if(!state.demo)localStorage.setItem("gwai_run",JSON.stringify({results:state.results,status:state.status,brief:state.brief}))}catch(e){}}
+function restore(){try{const s=JSON.parse(localStorage.getItem("gwai_run")||"null");if(s&&s.results&&Object.keys(s.results).length){state.results=s.results;state.status=Object.fromEntries(AGENTS.map(a=>[a.id,s.results[a.id]?"done":"idle"]));state.brief=s.brief;state.demo=false;setBrief(s.brief);return true}}catch(e){}return false}
+
+document.querySelectorAll("nav.tabs button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("nav.tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));
+  ["run","agents","arch","roadmap"].forEach(v=>$("#view-"+v).hidden=v!==b.dataset.tab); window.scrollTo(0,0);
+}));
+document.addEventListener("click",e=>{
+  const g=e.target.closest("[data-go]"); if(g){document.getElementById("out-"+g.dataset.go)?.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth",block:"start"})}
+  const r=e.target.closest("[data-rerun]"); if(r) rerun(r.dataset.rerun);
+  const p=e.target.closest("[data-preset]"); if(p){setBrief(PRESETS[p.dataset.preset]);toast("Brief loaded — press Run all agents")}
+});
+$("#briefForm").addEventListener("input",renderBriefSum);
+$("#briefForm").addEventListener("submit",e=>e.preventDefault());
+$("#runBtn").onclick=runAll;
+$("#stopBtn").onclick=()=>{stopAll();toast("Stopping…")};
+$("#exportMd").onclick=()=>{if(!Object.keys(state.results).length)return toast("Run the agents first");saveFile(`growth-kit-${slug()}.md`,kitMd())};
+$("#exportCsv").onclick=()=>saveFile(`lead-tracker-${slug()}.csv`,trackerCsv());
+$("#copyMd").onclick=async()=>{try{await navigator.clipboard.writeText(kitMd());toast("Growth kit copied as Markdown")}catch(e){toast("Copy isn't allowed here; use Save instead")}};
+
+/* ---------------- Boot ---------------- */
+setBrief(PRESETS.academy);
+if(!restore()){ state.results=JSON.parse(document.getElementById("demo").textContent); state.brief=PRESETS.academy; AGENTS.forEach(a=>state.status[a.id]="done"); state.demo=true; }
+renderSpecs(); renderOutputs(); banner();
+if(window.claude){
+  claude.use("sample").then(s=>{sampleFn=s;banner();renderOutputs()});
+  claude.use("downloads").then(d=>{downloadsNs=d});
+}
+});
+</script>
+
+<script type="application/json" id="demo">
+{
+"orch":{"objective":"Generate 40 qualified admission inquiries and 15 enrolments for Brightpath's January O/A Level batch by 10 January 2027, spending no more than PKR 25,000 per month.","success_metrics":[{"metric":"Qualified inquiries (parent asks about a subject and batch)","target":"40","timeframe":"By 10 Jan 2027"},{"metric":"Inquiry → demo-class conversion","target":"50%","timeframe":"Weekly"},{"metric":"Demo-class → enrolment conversion","target":"40%","timeframe":"Weekly"},{"metric":"Median WhatsApp first-reply time","target":"Under 15 minutes in centre hours","timeframe":"From week 1"}],"assumptions":["Parents, not students, make the final decision and pay fees.","Most students come from schools within about 5 km of the centre.","The centre can run free demo classes on two weekend slots.","Current results (grades) can be shared with parent consent."],"questions_for_client":["What grades did last year's students achieve? Can we share any results with permission?","Which schools do current students come from?","How many seats are free per subject for January?","Who answers WhatsApp, and during which hours?","Is there a sibling or early-admission discount already?"],"agent_briefs":[{"agent":"Business Analyst","focus":"Find why word of mouth works and where inquiries are lost."},{"agent":"Target Market Researcher","focus":"Profile parents of O/A Level students near Gulshan-e-Iqbal and their decision triggers."},{"agent":"Marketing Agent","focus":"A January admission campaign within PKR 25,000/month built around a free demo class."},{"agent":"Content Creator","focus":"Proof-based content: teacher expertise, small batches, mock-exam system."},{"agent":"Sales Lead","focus":"Fast WhatsApp inquiry handling and school-community outreach."},{"agent":"Quality Reviewer","focus":"No unverifiable grade claims; parent consent for any student content."},{"agent":"Analytics","focus":"Track every inquiry by source in one Google Sheet."}],"risks_to_watch":["Claiming results without proof damages trust with parents.","Slow WhatsApp replies waste paid reach.","Overbooking demo classes the teachers can't handle."]},
+"analyst":{"business_summary":"A two-year-old tuition centre in Gulshan-e-Iqbal teaching O and A Level sciences, maths and English in small batches. 60 students against capacity of 120, so half its seats earn nothing.","value_proposition":"Small batches with monthly mock exams, so parents see progress every month instead of waiting for final results.","swot":{"strengths":["Small batch size (personal attention)","Monthly mock exams give measurable progress","Word of mouth already brings students"],"weaknesses":["No consistent online presence","Slow, untracked WhatsApp replies","No proof assets (results, testimonials) collected"],"opportunities":["January batch is a natural decision point for parents","School WhatsApp parent groups and community pages","Sibling and referral offers to current families"],"threats":["Large tuition chains with bigger brands","Home tutors who are cheaper and more flexible","Parents comparing fees on price alone"]},"revenue_model":{"how_it_earns":"Monthly fee per subject per student (PKR 9,000–14,000).","pricing_notes":"A student taking 3 subjects is worth roughly PKR 30,000+ per month. Each new enrolment therefore pays back a month's marketing budget in about one month (estimate).","unit_economics_to_check":["Average subjects per student","Average months a student stays","Teacher cost per batch","Seats free per batch in January"]},"core_problems":[{"problem":"Inquiries are lost because WhatsApp replies are slow and untracked","evidence_or_assumption":"Stated by owner","impact":"High"},{"problem":"No proof shown to new parents (results, teacher profiles, reviews)","evidence_or_assumption":"Assumption from irregular Facebook page","impact":"High"},{"problem":"Referrals happen but are not encouraged or rewarded","evidence_or_assumption":"Assumption","impact":"Medium"},{"problem":"Unknown which channel brings students","evidence_or_assumption":"Stated by owner","impact":"Medium"}],"quick_wins":["Set up WhatsApp Business with quick replies and a greeting message (free).","Ask current parents for 5 short written reviews this week.","Create a Google Business Profile with photos and timings.","Start a one-tab inquiry sheet with a 'How did you hear about us?' column."],"recommended_focus":"Fix inquiry handling first, then drive traffic with a free-demo-class campaign backed by proof."},
+"research":{"ideal_customer_profile":{"who":"Parents of O Level (Grade 8–10) and A Level students who want measurable grade improvement","where":"Gulshan-e-Iqbal, Gulistan-e-Jauhar, PECHS and nearby, within about 30 minutes' travel","budget_or_spend":"Already spending on school fees and often another tutor; fee comparisons are common (assumption)","decision_maker":"Usually the mother researches, both parents decide; student influences choice of teacher","buying_triggers":["Disappointing mid-term or mock results","Start of a new academic year / January batch","A friend's child improving at a tuition centre","Exam registration deadlines approaching"]},"personas":[{"name":"Worried mid-term parent","description":"Parent whose child scored below expectations in mid-terms and wants a fix before final exams.","goals":["See improvement in the next mock","Know the teacher personally"],"pain_points":["Large classes at current academy","No feedback on progress"],"objections":["Is it worth switching mid-year?","Fees are higher than a home tutor"],"where_they_spend_time":["School parent WhatsApp groups","Facebook community groups","School gates at pickup"]},{"name":"Ambitious A Level student","description":"Student aiming for strong grades for university admission, researching teachers themselves.","goals":["Top grades in sciences","Past-paper practice"],"pain_points":["Generic teaching","Crowded batches"],"objections":["Which teacher exactly will teach me?"],"where_they_spend_time":["Instagram","TikTok","Friends' recommendations"]}],"segments_ranked":[{"segment":"O Level parents within 5 km","why":"Largest pool, shortest travel, highest trust in local referrals","priority":"1"},{"segment":"A Level students (self-researching)","why":"Higher fees per student, decide on teacher reputation","priority":"2"},{"segment":"Siblings of current students","why":"Cheapest to acquire; already trust the centre","priority":"3"}],"competitor_landscape":[{"competitor_type":"Large tuition chains","how_they_win":"Brand recognition, many branches","gap_to_exploit":"Smaller batches and personal progress tracking"},{"competitor_type":"Home tutors","how_they_win":"Convenience and lower price","gap_to_exploit":"Structured mock exams and peer environment"},{"competitor_type":"Individual star teachers","how_they_win":"Personal reputation","gap_to_exploit":"Showcase Brightpath's teachers as individuals"}],"hypotheses_to_validate":["Parents choose tuition mainly on teacher reputation, then batch size, then fee.","A free demo class converts better than a discount.","Most inquiries arrive via WhatsApp after a friend's referral."],"interview_questions":["How did you choose your child's current tuition?","What made you start looking last time?","Who did you ask for recommendations?","What did you compare between options?","What would make you switch mid-year?","How much do you currently spend on tuition per month?","What would you need to see in a first visit to decide?"]},
+"marketing":{"positioning_statement":"For Gulshan parents who want to see their child's grades improve before exams, Brightpath Academy is the small-batch O/A Level centre that proves progress with a mock exam every month.","key_messages":["Small batches: your child is known by name.","A mock exam every month, with a progress report you can read.","Try a free demo class before you decide.","Teachers who specialise in O/A Level Cambridge papers."],"channel_plan":[{"channel":"WhatsApp Business","why":"Where parents already inquire","cadence":"Reply within 15 min; weekly status update","monthly_budget_pkr":"0","kpi":"Reply time, inquiries handled"},{"channel":"Facebook + Instagram boosted posts","why":"Reach parents within 5 km","cadence":"3 organic posts/week, 2 boosted posts/month","monthly_budget_pkr":"15,000","kpi":"Inquiries per PKR 1,000"},{"channel":"Referral programme","why":"Word of mouth already works","cadence":"Announce once, remind every 2 weeks","monthly_budget_pkr":"5,000","kpi":"Referred inquiries"},{"channel":"Printed flyers at nearby schools / stationery shops","why":"Physical presence near the decision point","cadence":"Once at campaign start","monthly_budget_pkr":"5,000","kpi":"Inquiries citing flyer"}],"campaign":{"name":"January Head Start","big_idea":"See the Brightpath difference in one free class before the new batch begins.","offer":"Free demo class on two Saturdays plus a free diagnostic mock test with a written report.","duration":"4 weeks, ending 10 January"},"thirty_day_calendar":[{"week":"Week 1","theme":"Set-up and proof","actions":["WhatsApp Business quick replies live","Collect 5 parent reviews","Teacher introduction posts"]},{"week":"Week 2","theme":"Launch the offer","actions":["Announce free demo class","Boost demo-class post within 5 km","Distribute flyers"]},{"week":"Week 3","theme":"Social proof","actions":["Share anonymised progress chart","Reel: inside a small batch","Referral reminder to current parents"]},{"week":"Week 4","theme":"Urgency and close","actions":["Run demo classes","Follow up all inquiries","'Seats left' post per subject"]}],"budget_split":[{"item":"Boosted posts","pkr":"15,000"},{"item":"Referral rewards (fee discounts)","pkr":"5,000"},{"item":"Flyer printing","pkr":"5,000"}],"kpis":[{"kpi":"Qualified inquiries","target":"40 by 10 Jan"},{"kpi":"Demo-class attendance","target":"20"},{"kpi":"Enrolments","target":"15"},{"kpi":"Cost per inquiry","target":"Under PKR 600"}]},
+"content":{"content_pillars":[{"pillar":"Proof of progress","purpose":"Show results without exaggeration","example_topics":["Mock exam system explained","Anonymised progress chart","Parent review"]},{"pillar":"Meet the teachers","purpose":"Build personal trust","example_topics":["Teacher intro","Teacher's top exam tip","Why I teach Physics"]},{"pillar":"Study help","purpose":"Give value before asking","example_topics":["Common O Level Chemistry mistakes","Past-paper timetable","Exam-week routine"]},{"pillar":"Admissions","purpose":"Drive inquiries","example_topics":["Free demo class","Seats left","How to enrol"]}],"brand_voice":{"tone":"Warm, calm and precise — like a trusted teacher at a parents' meeting","do":["Use specific facts about batches and mocks","Mix English with natural Roman Urdu","Address parents respectfully"],"dont":["Claim guaranteed A grades","Use fear about failing","Post student photos without written consent"]},"briefs":{"social_writer":"6 posts across the 4 pillars, half aimed at parents on Facebook, half at students on Instagram, all pointing to the free demo class.","visual_designer":"Clean, bright designs in the academy's blue and yellow; teacher photos where available; demo-class flyer for print.","video_scripter":"Two phone-shot reels: a 30-second 'inside a small batch' tour and a teacher exam tip.","localizer":"Roman Urdu versions of the demo-class offer and key messages for WhatsApp and Facebook."},"publishing_rules":["Every post ends with one clear action (WhatsApp us / book demo).","No student faces without written parent consent.","Post at 8–9 pm when parents are free (hypothesis — check Insights after 2 weeks)."]},
+"social":{"posts":[{"platform":"Facebook","pillar":"Admissions","hook":"Free demo class this Saturday — see how a small batch feels.","caption":"January batches start soon. Before you decide, bring your child for a free 60-minute demo class in Maths, Physics or Chemistry. Small groups, one teacher who knows every student, and a free diagnostic test with a written report. Seats per demo are limited.","hashtags":["#OLevelKarachi","#GulshanEIqbal","#TuitionKarachi"],"cta":"WhatsApp us to book your seat.","visual_note":"Demo-class flyer design (Visual Designer brief 1)"},{"platform":"Instagram","pillar":"Meet the teachers","hook":"Your Physics teacher, before you meet them.","caption":"Meet the teacher behind our O Level Physics batch: years of Cambridge-paper teaching, a love for drawing diagrams that finally make sense, and a rule that nobody leaves class with an unanswered question.","hashtags":["#OLevelPhysics","#KarachiStudents"],"cta":"DM 'PHYSICS' to book a free demo.","visual_note":"Teacher portrait with name and subject"},{"platform":"Facebook","pillar":"Proof of progress","hook":"Why we hold a mock exam every month.","caption":"Waiting until finals to find out how your child is doing is too late. Every month our students sit a timed mock, and parents get a one-page report showing marks, weak topics and the plan for next month.","hashtags":["#ParentsOfKarachi","#OLevels"],"cta":"Ask us for a sample report on WhatsApp.","visual_note":"Sample report with all names blurred"},{"platform":"Instagram","pillar":"Study help","hook":"3 Chemistry mistakes that cost O Level marks.","caption":"1. Missing state symbols. 2. Unbalanced equations in the final step. 3. Writing 'it reacts' instead of naming the observation. Save this for exam week.","hashtags":["#OLevelChemistry","#StudyTips"],"cta":"Follow for weekly exam tips.","visual_note":"3-slide carousel"},{"platform":"Facebook","pillar":"Admissions","hook":"Bring a friend, both of you save.","caption":"Current Brightpath families: when a friend joins the January batch through you, both families get a fee discount on the first month. Thank you for trusting us with your children.","hashtags":["#Brightpath"],"cta":"Send us your friend's name on WhatsApp.","visual_note":"Simple referral graphic"},{"platform":"Instagram","pillar":"Admissions","hook":"Last seats for January.","caption":"A Level Chemistry and O Level Maths batches are nearly full. If you've been thinking about it, now is the time to book a free demo class.","hashtags":["#ALevelKarachi","#OLevelKarachi"],"cta":"Tap the WhatsApp button to book.","visual_note":"Seats-left counter per subject (update real numbers)"}]},
+"visual":{"designs":[{"title":"Free demo class flyer","format":"A5 print flyer + Facebook post","size_px":"1748 × 2480 (A5 at 300 dpi); 1080 × 1350 for feed","layout":"Headline top third, three subject icons middle, date and WhatsApp number bottom on a solid band","text_on_design":"FREE DEMO CLASS · Saturdays in December · O & A Level Maths, Physics, Chemistry · Book on WhatsApp","colors_and_fonts":"Academy blue background, yellow headline band; bold sans headline, regular sans body","canva_steps":["Search template 'education flyer A5'","Replace colours with brand blue/yellow","Add subject icons from Elements","Add WhatsApp number and centre address","Export PDF Print for flyers, PNG for Facebook"]},{"title":"Teacher introduction","format":"Instagram feed post","size_px":"1080 × 1350","layout":"Teacher photo left 60%, name/subject/one-line promise right","text_on_design":"Meet your O Level Physics teacher · Small batches · Monthly mocks","colors_and_fonts":"White background, blue name, yellow underline accent","canva_steps":["Start from 'Instagram portrait post'","Remove photo background with BG Remover (if available) or use plain wall photo","Place name in 48pt bold","Add logo bottom corner","Save as template for all teachers"]},{"title":"Seats-left story","format":"Instagram / WhatsApp status","size_px":"1080 × 1920","layout":"Three subject rows with a seats-left number each","text_on_design":"January batch · Seats left: Maths 4 · Physics 3 · Chemistry 5","colors_and_fonts":"Blue background, white text, yellow numbers","canva_steps":["Create 'Instagram story' design","Add three text rows","Make numbers 2× larger than labels","Duplicate weekly and update real numbers"]}]},
+"video":{"scripts":[{"title":"Inside a small batch","platform":"Instagram Reels / Facebook","length_seconds":"30","hook_first_3s":"Text: 'This is what 8 students in a class looks like.'","scenes":[{"time":"0–3s","visual":"Wide shot of a calm classroom from the door","voiceover":"","on_screen_text":"8 students. 1 teacher."},{"time":"3–12s","visual":"Teacher explaining at whiteboard, close-up of diagram","voiceover":"Every student gets their questions answered in class.","on_screen_text":"No back benches"},{"time":"12–22s","visual":"Hands marking a mock paper (no faces)","voiceover":"And every month, a mock exam with a report for parents.","on_screen_text":"Monthly mock + report"},{"time":"22–30s","visual":"Front of the centre with signboard","voiceover":"Try a free demo class this Saturday.","on_screen_text":"Free demo class · WhatsApp us"}],"cta":"WhatsApp to book a free demo."},{"title":"One-minute exam tip","platform":"Instagram Reels / TikTok","length_seconds":"40","hook_first_3s":"Teacher to camera: 'Most students lose this mark in Physics.'","scenes":[{"time":"0–3s","visual":"Teacher to camera","voiceover":"Most students lose this mark in Physics.","on_screen_text":"O Level Physics tip"},{"time":"3–30s","visual":"Whiteboard: units in a calculation question","voiceover":"Always write the unit in your final answer. Missing it can cost you the mark even when the number is right.","on_screen_text":"Final answer = number + unit"},{"time":"30–40s","visual":"Teacher smiles, points to caption","voiceover":"More tips every week. Want to join a class? Book a free demo.","on_screen_text":"Free demo class · link in bio"}],"cta":"Follow for weekly tips; WhatsApp to book."}]},
+"local":{"language_notes":"Use Roman Urdu for WhatsApp and Facebook (parents), English for Instagram (students). Keep 'O Level', 'demo class' and subject names in English as Karachi parents say them.","localized":[{"original":"Try a free demo class before you decide.","roman_urdu":"Faisla karne se pehle ek free demo class zaroor attend karein.","urdu":"فیصلہ کرنے سے پہلے ایک فری ڈیمو کلاس ضرور اٹینڈ کریں۔","note":"Polite imperative suits parents"},{"original":"Small batches: your child is known by name.","roman_urdu":"Chhote batches — har bacche ko teacher naam se jaanta hai.","urdu":"چھوٹے بیچز — ہر بچے کو ٹیچر نام سے جانتا ہے۔","note":"Warm, personal"},{"original":"A mock exam every month, with a report you can read.","roman_urdu":"Har mahine mock exam, aur parents ke liye asaan progress report.","urdu":"ہر مہینے موک ایگزام، اور والدین کے لیے آسان پراگریس رپورٹ۔","note":"Emphasise 'asaan' (easy to read)"},{"original":"WhatsApp us to book your seat.","roman_urdu":"Seat book karne ke liye humein WhatsApp karein.","urdu":"سیٹ بک کرنے کے لیے ہمیں واٹس ایپ کریں۔","note":"Standard CTA"},{"original":"Bring a friend, both of you save.","roman_urdu":"Dost ko saath laayein, dono families ko discount milega.","urdu":"دوست کو ساتھ لائیں، دونوں فیملیز کو ڈسکاؤنٹ ملے گا۔","note":"Say 'families' since parents pay"}]},
+"sales":{"qualification_criteria":[{"criterion":"Level and subject match","what_good_looks_like":"O/A Level student needing a subject Brightpath teaches"},{"criterion":"Location","what_good_looks_like":"Can reach the centre within about 30 minutes"},{"criterion":"Timing","what_good_looks_like":"Wants to start in January or earlier"},{"criterion":"Decision-maker involved","what_good_looks_like":"Parent is part of the conversation"}],"lead_sources":[{"source":"WhatsApp inquiries from posts","how_to_use":"Quick reply, ask level/subject, offer demo slot","expected_quality":"High"},{"source":"Referrals from current parents","how_to_use":"Ask each family personally; track who referred","expected_quality":"Very high"},{"source":"School community groups","how_to_use":"Share study tips, not ads; follow group rules","expected_quality":"Medium"},{"source":"Walk-ins from banner/flyers","how_to_use":"Take name, level, subject in the sheet on the spot","expected_quality":"High"}],"prospect_archetypes":[{"archetype":"Parent after weak mid-terms","signals":"Mentions recent results, asks 'can you help quickly?'","first_message_angle":"Free diagnostic test to find weak topics"},{"archetype":"Parent switching from a large academy","signals":"Complains about crowded classes","first_message_angle":"Batch size and personal feedback"},{"archetype":"Self-researching A Level student","signals":"Asks which teacher, past papers","first_message_angle":"Teacher profile and demo class"},{"archetype":"Sibling of current student","signals":"Existing family mentions younger child","first_message_angle":"Sibling discount and same trusted teachers"}],"outreach_sequence":[{"step":"1 · First reply","day":"Day 0 (within 15 min)","channel":"WhatsApp","message":"Assalam o Alaikum! Thank you for contacting Brightpath Academy. Which level (O/A) and subject is your child looking for? We have free demo classes this Saturday at 11 am and 4 pm."},{"step":"2 · Book demo","day":"Day 0–1","channel":"WhatsApp","message":"Great — I've noted [child's name] for the [subject] demo on Saturday at [time]. Our address is [address]. Please bring a recent test if you have one so the teacher can see where to help."},{"step":"3 · Reminder","day":"Day before demo","channel":"WhatsApp","message":"Reminder: [child's name]'s free demo class is tomorrow at [time]. See you then! Reply here if you need to change the time."},{"step":"4 · Follow-up","day":"Day after demo","channel":"WhatsApp / call","message":"Thank you for coming yesterday. Here is [child's name]'s diagnostic summary from the teacher. January seats in [subject] are limited — would you like me to reserve one?"}],"objection_handling":[{"objection":"Fees are higher than a home tutor","response":"Explain what's included: monthly mocks, written reports, peer practice. Offer the free demo so they can compare."},{"objection":"We'll decide after exams","response":"Offer the diagnostic test now so they have a plan ready; follow up on an agreed date."},{"objection":"Too far from home","response":"Share batch timings that avoid peak traffic; suggest weekend batches."}],"lead_tracker_columns":["Parent / student name","Level","Subject(s)","Source","Area","First contact date","Reply time (min)","Demo date","Status","Next follow-up","Notes"],"follow_up_rules":["Reply to every inquiry within 15 minutes during centre hours.","Never message more than 3 times without a reply.","Mark lead 'Lost' with a reason, so patterns show up.","Only message people who contacted the centre or were referred with permission."]},
+"qa":{"overall_score":"8/10","verdict":"Needs fixes","must_fix":[{"agent":"Social Post Writer","issue":"Teacher post implies years of experience without a confirmed number","fix":"Replace with the teacher's real years, or remove the claim"},{"agent":"Social Post Writer","issue":"'Seats left' post needs real numbers","fix":"Update the counter weekly from the batch register"},{"agent":"Marketing Agent","issue":"Referral discount amount not defined","fix":"Owner sets a fixed discount (e.g. PKR 2,000 on first month) and adds it to the budget"},{"agent":"Business Analyst","issue":"Payback estimate depends on unverified subjects-per-student","fix":"Confirm average subjects per student from fee records"}],"claims_to_verify":["Teacher experience and qualifications","Batch size of 8 students","Demo class dates and slots"],"consistency_checks":[{"check":"Budget split equals PKR 25,000","result":"Pass","note":"15,000 + 5,000 + 5,000"},{"check":"All CTAs point to WhatsApp booking","result":"Pass","note":""},{"check":"Messages match positioning","result":"Pass","note":"Small batches and monthly mocks used throughout"},{"check":"Language matches brief","result":"Pass","note":"English + Roman Urdu provided"}],"privacy_and_compliance":["Get written parent consent before showing any student face or name.","Blur names on sample reports.","Follow WhatsApp Business policy: only message people who contacted you or opted in."],"approved_for_client":["Positioning and key messages","Campaign plan and calendar","Visual briefs","Video scripts","Sales sequence"]},
+"analytics":{"north_star_metric":"Weekly enrolments from new inquiries","kpi_dashboard":[{"kpi":"Qualified inquiries","definition":"Parent/student asks about a subject and level we teach","source":"Lead tracker sheet","target":"10 per week","review":"Weekly"},{"kpi":"Reply time","definition":"Minutes from first message to first reply","source":"Lead tracker sheet","target":"Under 15 min","review":"Weekly"},{"kpi":"Demo attendance rate","definition":"Attended ÷ booked","source":"Lead tracker sheet","target":"70%","review":"Weekly"},{"kpi":"Enrolment rate","definition":"Enrolled ÷ attended demo","source":"Fee register","target":"40%","review":"Weekly"},{"kpi":"Cost per inquiry","definition":"Paid spend ÷ inquiries from paid posts","source":"Meta Insights + sheet","target":"Under PKR 600","review":"Monthly"}],"tracking_setup":["Create the lead tracker in Google Sheets with the Sales Lead's columns.","Add a 'Source' dropdown: Facebook, Instagram, Referral, Flyer, Walk-in, Other.","Ask every inquiry 'How did you hear about us?' and log it.","Add a summary tab with COUNTIFS per source and week."],"weekly_report_template":["Inquiries this week (by source)","Demo classes booked / attended","Enrolments","Average reply time","Best and worst post","One change for next week"],"action_plan":[{"week":"Week 1","tasks":["Set up WhatsApp Business","Build lead tracker","Collect 5 reviews"],"owner":"Owner + front desk","done_when":"Sheet live and reviews posted"},{"week":"Week 2","tasks":["Launch demo-class offer","Boost first post","Distribute flyers"],"owner":"Owner","done_when":"10+ inquiries logged"},{"week":"Week 3","tasks":["Run first demo class","Post reel","Referral reminder"],"owner":"Teachers + owner","done_when":"Demo held, follow-ups sent"},{"week":"Week 4","tasks":["Second demo class","Follow up every lead","Weekly report"],"owner":"Front desk","done_when":"All leads have a status"}],"decision_rules":["If reply time is over 30 minutes, fix staffing before spending on ads.","If cost per inquiry exceeds PKR 1,000 after a week, change the boosted post creative.","If demo attendance is under 50%, add a reminder call the evening before.","If one source brings over half the enrolments, move budget toward it."]}
+}
+</script>
+
+</body></html>

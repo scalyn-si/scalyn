@@ -1,0 +1,18 @@
+{
+  "agent_id": "agent_1_business_analyst",
+  "client_info": {
+    "business_name": "Zenith Dental Care",
+    "sector": "Healthcare / Private Dental Practice",
+    "location": "Manchester & Leeds, UK",
+    "business_model": "SERVICE_LOCAL"
+  },
+  "business_diagnosis": {
+    "description": "Private cosmetic and orthodontic dental clinic providing Invisalign, dental implants, and teeth whitening.",
+    "unique_value_proposition": "Same-day 3D digital smile scanning with 0% interest flexible payment plans and zero waiting room time.",
+    "growth_goal": "Attract 45 new private Invisalign and implant patients per month",
+    "budget": "£2,500/month digital acquisition spend",
+    "existing_channels": ["Basic Google My Business", "Word of Mouth"],
+    "key_competitors": ["Bupa Dental Care", "MyDentist", "Local NHS Practices"],
+    "operational_bottlenecks": "Dental receptionists miss over 35% of inbound calls during peak hours; website has no online booking calendar, forcing patients to call during clinic hours."
+  }
+}
